@@ -1,7 +1,6 @@
 Centroid Track Program
 
-Searches for red,blue,green,yellow centroids and stores coordination in shared memory. 
-Thresholds should be adjusted to account for lighting,camera, and shade of objects
+Searches for centroid of 4x 3 inch coloured diameter circle and commits positions to shared memory
 
 STEPS:
 
