@@ -1,0 +1,19 @@
+# Visual Studio
+*.user
+*.suo
+.vs/
+Debug/
+Release/
+x64/
+x86/
+ipch/
+
+# Compiled
+*.obj
+*.pch
+*.ilk
+*.pdb
+*.exe
+
+# Images (optional - remove these lines if you want to track .bmp files)
+*.bmp
