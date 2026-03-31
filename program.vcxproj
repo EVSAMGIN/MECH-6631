@@ -137,10 +137,25 @@
     <Library Include="strmbasd.lib" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="a_star_pathing.cpp" />
     <ClCompile Include="centroid.cpp" />
+    <ClCompile Include="cost_map.cpp" />
+    <ClCompile Include="obstacle.cpp" />
     <ClCompile Include="program.cpp" />
     <ClCompile Include="timer.cpp" />
+    <ClCompile Include="vehicle.cpp" />
     <ClCompile Include="vision.cpp" />
+    <ClCompile Include="world_map.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="a_star_pathing.h" />
+    <ClInclude Include="centroid.h" />
+    <ClInclude Include="cost_map.h" />
+    <ClInclude Include="image_transfer.h" />
+    <ClInclude Include="obstacle.h" />
+    <ClInclude Include="timer.h" />
+    <ClInclude Include="vehicle.h" />
+    <ClInclude Include="vision.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
