@@ -21,7 +21,7 @@ int main()
 	int radius, width, height, cam_number, nlabels, tvalue = 70, min_label_size = 200;
 	bool upHeld = false, downHeld = false, leftHeld = false, rightHeld = false;
 	double ic_1, jc_1, ic_2, jc_2, ic_3, jc_3, ic_4, jc_4;
-	image rgb1, rgb2, gscale1, gscale2, label;
+	image rgb1, rgb2,rgb3, gscale1, gscale2, label;
 
 	// Shared memory setup
 	HANDLE hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(CentroidData), "CentroidSharedMem");
@@ -44,12 +44,14 @@ int main()
 
 	rgb1.width   = width;  rgb1.height   = height;  rgb1.type   = RGB_IMAGE;
 	rgb2.width   = width;  rgb2.height   = height;  rgb2.type   = RGB_IMAGE;
+	rgb3.width = width;  rgb3.height = height;  rgb3.type = RGB_IMAGE;
 	gscale1.width = width; gscale1.height = height; gscale1.type = GREY_IMAGE;
 	gscale2.width = width; gscale2.height = height; gscale2.type = GREY_IMAGE;
 	label.type   = LABEL_IMAGE; label.width = width; label.height = height;
 
 	allocate_image(rgb1);
 	allocate_image(rgb2);
+	allocate_image(rgb3);
 	allocate_image(gscale1);
 	allocate_image(gscale2);
 	allocate_image(label);
@@ -60,6 +62,7 @@ int main()
 
 		acquire_image(rgb1, cam_number);
 		scale(rgb1, rgb2);
+		copy(rgb2, rgb3); //For inspection
 		copy(rgb2, gscale1);  // RGB -> greyscale
 		lowpass_filter(gscale1, gscale2);
 		highpass_filter(gscale2, gscale1);
@@ -128,6 +131,7 @@ int main()
 
 	save_rgb_image("rgb1.bmp", rgb1);
 	save_rgb_image("gscale1.bmp", rgb2);
+	save_rgb_image("rgb3.bmp", rgb3);
 	free_image(rgb1);
 	free_image(rgb2);
 	free_image(gscale1);
