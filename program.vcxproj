@@ -151,6 +151,7 @@
     <ClInclude Include="a_star_pathing.h" />
     <ClInclude Include="centroid.h" />
     <ClInclude Include="cost_map.h" />
+    <ClInclude Include="world_map.h" />
     <ClInclude Include="image_transfer.h" />
     <ClInclude Include="obstacle.h" />
     <ClInclude Include="timer.h" />

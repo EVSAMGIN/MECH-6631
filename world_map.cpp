@@ -1,5 +1,6 @@
 #include <cmath>
 
+#include "world_map.h"
 #include "obstacle.h"
 #include "vehicle.h"
 #include "cost_map.h"
@@ -10,6 +11,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <stdio.h>
+#include <iostream>
 
 // Centroid index values for centroid array
 
@@ -24,7 +26,7 @@ static const int OBSTACLE_3_CENTROID_INDEX = 12;
 double enemy_direction, direction_error;
 char *serial_instruction = new char[5];
 
-void world_map(int *centroid_array, int width, int height) {
+world_map::world_map(int *centroid_array, int width, int height) {
 	
 	// Initial setup, only run once:
 
@@ -39,6 +41,8 @@ void world_map(int *centroid_array, int width, int height) {
 	DWORD dwWritten;
 	DWORD dwRes;
 	BOOL fRes;
+
+	std::cout << "Created serial port configuration variables\n\n";
 
 	//  Open a handle to the specified com port.
 	hCom = CreateFile(pcCommPort,
@@ -95,6 +99,8 @@ void world_map(int *centroid_array, int width, int height) {
 
 	static vehicle our_vehicle(control_front_x, control_front_y, control_back_x, control_back_y, 9, 1);
 
+	std::cout << "Created friendly robot vehicle object\n\n";
+
 	//// Enemy robot
 
 	static int *enemy_front_x = centroid_array + BLUE_CENTROID_INDEX;
@@ -103,6 +109,8 @@ void world_map(int *centroid_array, int width, int height) {
 	static int *enemy_back_y = centroid_array + YELLOW_CENTROID_INDEX + 1;
 
 	static vehicle enemy_vehicle(enemy_front_x, enemy_front_y, enemy_back_x, enemy_back_y, 9, 1);
+
+	std::cout << "Created enemy robot vehicle object\n\n";
 
 	//// Obstacles and Cost-Map Initialization
 	/*
@@ -166,13 +174,23 @@ void world_map(int *centroid_array, int width, int height) {
 
 			osWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 			WriteFile(hCom, serial_instruction, 1, &dwWritten, &osWrite);
+
+			std::cout << "Sent turn left command.\n\n";
 		}
 		else {
 			*serial_instruction = '10';
 
 			osWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 			WriteFile(hCom, serial_instruction, 2, &dwWritten, &osWrite);
+
+			std::cout << "Sent turn right command.\n\n";
 		}
+
+		our_vehicle.update_position_orientation();
+		enemy_vehicle.update_position_orientation();
+		direction_error = enemy_direction - our_vehicle.get_orientation();
+
+		std::cout << "Updated vehicle position.\n\n";
 	}
 	
 
@@ -184,4 +202,4 @@ void world_map(int *centroid_array, int width, int height) {
 	
 
 	// Send commands to robot over Bluetooth
-}
+};

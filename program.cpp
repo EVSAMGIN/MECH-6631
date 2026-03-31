@@ -12,6 +12,10 @@ using namespace std;
 #include "image_transfer.h"
 #include "vision.h"
 #include "centroid.h"
+#include "world_map.h"
+#include <thread>
+
+int* centroid_array_for_control = new int[14];
 
 int main()
 {
@@ -55,6 +59,10 @@ int main()
 	allocate_image(gscale1);
 	allocate_image(gscale2);
 	allocate_image(label);
+
+	thread control_thread(world_map(centroid_array_for_control, width, height));
+
+	control_thread.detach();
 
 	while (1) {
 
@@ -104,6 +112,15 @@ int main()
 		ic_2 = ic_arr[1]; jc_2 = jc_arr[1];
 		ic_3 = ic_arr[2]; jc_3 = jc_arr[2];
 		ic_4 = ic_arr[3]; jc_4 = jc_arr[3];
+
+		centroid_array_for_control[0] = (int) ic_arr[0] + 0.5;
+		centroid_array_for_control[1] = (int) jc_arr[0] + 0.5;
+		centroid_array_for_control[2] = (int) ic_arr[1] + 0.5;
+		centroid_array_for_control[3] = (int) jc_arr[1] + 0.5;
+		centroid_array_for_control[4] = (int) ic_arr[2] + 0.5;
+		centroid_array_for_control[5] = (int) jc_arr[2] + 0.5;
+		centroid_array_for_control[6] = (int) ic_arr[3] + 0.5;
+		centroid_array_for_control[7] = (int) jc_arr[3] + 0.5;
 
 		// Commit centroids to shared memory
 		sharedData->ic_1 = ic_1; sharedData->jc_1 = jc_1;
