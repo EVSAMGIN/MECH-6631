@@ -1,6 +1,11 @@
 #pragma once
 
 #include <cmath>
+#include <iostream>
+#include <fstream>
+
+#include <cmath>
+#include <Windows.h>
 
 #define PI 3.14159265
 
@@ -15,3 +20,6 @@ struct CentroidData {
 
 // Draw circular pink marker around centroid on an RGB image
 void draw_marker(ibyte* p0, int width, int height, int radius, double ic, double jc);
+
+// Apply two inclusive threshold ranges: [tlow1, thigh1] OR [tlow2, thigh2]
+int threshold_range(image& a, image& b, int tlow1, int thigh1, int tlow2, int thigh2);
