@@ -164,7 +164,8 @@ world_map::world_map(int *centroid_array, int width, int height) {
 	}
 	*/
 	
-	enemy_direction = atan2((enemy_vehicle.get_center_y() - our_vehicle.get_vehicle_center_y()), (enemy_vehicle.get_center_x()) - our_vehicle.get_vehicle_center_x());
+	//enemy_direction = atan2((enemy_vehicle.get_center_y() - our_vehicle.get_vehicle_center_y()), (enemy_vehicle.get_center_x()) - our_vehicle.get_vehicle_center_x());
+	enemy_direction = atan2((centroid_array[BLUE_CENTROID_INDEX + 1] - our_vehicle.get_vehicle_center_y()), (centroid_array[BLUE_CENTROID_INDEX] - our_vehicle.get_vehicle_center_x()));
 
 	direction_error = enemy_direction - our_vehicle.get_orientation();
 
