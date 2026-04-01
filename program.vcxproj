@@ -19,7 +19,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -137,9 +137,7 @@
     <Library Include="strmbasd.lib" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="a_star_pathing.cpp" />
     <ClCompile Include="centroid.cpp" />
-    <ClCompile Include="cost_map.cpp" />
     <ClCompile Include="obstacle.cpp" />
     <ClCompile Include="program.cpp" />
     <ClCompile Include="timer.cpp" />
@@ -148,9 +146,7 @@
     <ClCompile Include="world_map.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="a_star_pathing.h" />
     <ClInclude Include="centroid.h" />
-    <ClInclude Include="cost_map.h" />
     <ClInclude Include="world_map.h" />
     <ClInclude Include="image_transfer.h" />
     <ClInclude Include="obstacle.h" />

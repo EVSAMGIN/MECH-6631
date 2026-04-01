@@ -26,7 +26,7 @@ class obstacle
 		// Setters
 
 		void set_center_x(int *new_center_x);
-		void set_center_x(int *new_center_y);
+		void set_center_y(int *new_center_y);
 		void set_diameter(int new_diameter);
 		void set_keep_out(int new_keep_out);
 

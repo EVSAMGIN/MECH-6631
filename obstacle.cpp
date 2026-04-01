@@ -40,7 +40,7 @@ void obstacle::set_center_x(int *new_center_x) {
 	obstacle_centroid_x = new_center_x;
 }
 
-void obstacle::set_center_x(int *new_center_y) {
+void obstacle::set_center_y(int *new_center_y) {
 	obstacle_centroid_y = new_center_y;
 }
 

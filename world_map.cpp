@@ -26,7 +26,7 @@ static const int OBSTACLE_3_CENTROID_INDEX = 12;
 double enemy_direction, direction_error;
 char *serial_instruction = new char[5];
 
-world_map::world_map(int *centroid_array, int width, int height) {
+void mapper(int *centroid_array, int width, int height) {
 	
 	// Initial setup, only run once:
 

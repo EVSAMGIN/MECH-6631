@@ -60,7 +60,7 @@ int main()
 	allocate_image(gscale2);
 	allocate_image(label);
 
-	thread control_thread(world_map(centroid_array_for_control, width, height));
+	thread control_thread( mapper, centroid_array_for_control, width, height );
 
 	control_thread.detach();
 
