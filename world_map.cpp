@@ -45,6 +45,8 @@ void mapper(int *centroid_array, int width, int height) {
 	std::cout << "Created serial port configuration variables\n\n";
 
 	//  Open a handle to the specified com port.
+
+	/*
 	hCom = CreateFile(pcCommPort,
 		GENERIC_READ | GENERIC_WRITE,
 		0,      //  must be opened with exclusive-access
@@ -87,7 +89,7 @@ void mapper(int *centroid_array, int width, int height) {
 		//  Handle the error.
 		printf("SetCommState failed with error %d.\n", GetLastError());
 		//return (3);
-	}
+	}*/
 
 
 	//// Our robot
@@ -173,16 +175,16 @@ void mapper(int *centroid_array, int width, int height) {
 		if (direction_error < 0) {
 			*serial_instruction = '9';
 
-			osWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-			WriteFile(hCom, serial_instruction, 1, &dwWritten, &osWrite);
+		//	osWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		//	WriteFile(hCom, serial_instruction, 1, &dwWritten, &osWrite);
 
 			std::cout << "Sent turn left command.\n\n";
 		}
 		else {
 			*serial_instruction = '10';
 
-			osWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-			WriteFile(hCom, serial_instruction, 2, &dwWritten, &osWrite);
+		//	osWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		//	WriteFile(hCom, serial_instruction, 2, &dwWritten, &osWrite);
 
 			std::cout << "Sent turn right command.\n\n";
 		}
