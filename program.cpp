@@ -48,7 +48,7 @@ int main()
 	cout << "\npress space key to acquire image\n";
 	while (!KEY(VK_SPACE));
 
-	cam_number = 0;
+	cam_number = 1;
 	width = 640;
 	height = 480;
 	radius = 3;
