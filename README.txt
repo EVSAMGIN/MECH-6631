@@ -16,6 +16,10 @@ STEPS:
 -colour and label size thresholds 
 -time for last image processing loop to complete
 
+5.UP/DOWN arrows will adjust the pixel greyscale pixel thresholding
+
+6.LEFT/RIGHT arrows will adjust the label image size threshold (default is 200 pix)
+
 5.Press 'x' in the console to terminate session. 
 The last frames are saved under rgb1,rgb2,and gscale1
 rgb1 is the coloured image after scaling and applying lowpass/highpass filters

@@ -19,7 +19,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -138,9 +138,21 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="centroid.cpp" />
+    <ClCompile Include="obstacle.cpp" />
     <ClCompile Include="program.cpp" />
     <ClCompile Include="timer.cpp" />
+    <ClCompile Include="vehicle.cpp" />
     <ClCompile Include="vision.cpp" />
+    <ClCompile Include="world_map.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="centroid.h" />
+    <ClInclude Include="world_map.h" />
+    <ClInclude Include="image_transfer.h" />
+    <ClInclude Include="obstacle.h" />
+    <ClInclude Include="timer.h" />
+    <ClInclude Include="vehicle.h" />
+    <ClInclude Include="vision.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -17,6 +17,10 @@ using namespace std;
 #include "image_transfer.h"
 #include "vision.h"
 #include "centroid.h"
+#include "world_map.h"
+#include <thread>
+
+int* centroid_array_for_control = new int[14];
 
 int main()
 {
@@ -30,12 +34,7 @@ int main()
 	bool toggleHeld = false;
 	int activeRange = 1; // 1 => range1, 2 => range2
 	double ic_1, jc_1, ic_2, jc_2, ic_3, jc_3, ic_4, jc_4;
-	image rgb1, rgb2, rgb3, gscale1, gscale2, label;
-	// tracking state
-	std::atomic<bool> trackingMode(false);
-	int tracked_labels[4] = {0,0,0,0};
-	std::mutex trackMutex;
-	int selected_labels[4] = {0,0,0,0};
+	image rgb1, rgb2,rgb3, gscale1, gscale2, label;
 
 	// Shared memory setup
 	HANDLE hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(CentroidData), "CentroidSharedMem");
@@ -56,8 +55,8 @@ int main()
 
 	activate_camera(cam_number, height, width);
 
-	rgb1.width = width;  rgb1.height = height;  rgb1.type = RGB_IMAGE;
-	rgb2.width = width;  rgb2.height = height;  rgb2.type = RGB_IMAGE;
+	rgb1.width   = width;  rgb1.height   = height;  rgb1.type   = RGB_IMAGE;
+	rgb2.width   = width;  rgb2.height   = height;  rgb2.type   = RGB_IMAGE;
 	rgb3.width = width;  rgb3.height = height;  rgb3.type = RGB_IMAGE;
 	gscale1.width = width; gscale1.height = height; gscale1.type = GREY_IMAGE;
 	gscale2.width = width; gscale2.height = height; gscale2.type = GREY_IMAGE;
@@ -70,28 +69,9 @@ int main()
 	allocate_image(gscale2);
 	allocate_image(label);
 
-	// start command thread to accept 'track' and 'untrack' commands
-	std::thread cmdThread([&]() {
-		std::string cmd;
-		while (std::getline(std::cin, cmd)) {
-			if (cmd == "q") {
-				std::lock_guard<std::mutex> lk(trackMutex);
-				for (int i = 0; i < 4; ++i) tracked_labels[i] = selected_labels[i];
-				trackingMode.store(true);
-				cout << "Tracking labels:";
-				for (int i = 0; i < 4; ++i) if (tracked_labels[i]) cout << ' ' << tracked_labels[i];
-				cout << "\n";
-			} else if (cmd == "w") {
-				trackingMode.store(false);
-				std::lock_guard<std::mutex> lk(trackMutex);
-				for (int i = 0; i < 4; ++i) tracked_labels[i] = 0;
-				cout << "Untracked.\n";
-			} else if (cmd == "quit" || cmd == "exit") {
-				break; // thread will exit; main loop continues until user presses X
-			}
-		}
-	});
-	cmdThread.detach();
+	thread control_thread( mapper, centroid_array_for_control, width, height );
+
+	control_thread.detach();
 
 	while (1) {
 
@@ -100,9 +80,6 @@ int main()
 
 		acquire_image(rgb1, cam_number);
 		scale(rgb1, rgb2);
-		scale(rgb2, rgb2);
-		//scale(rgb2, rgb2);
-		//dialate(rgb2, rgb2);
 		copy(rgb2, rgb3); //For inspection
 		copy(rgb2, gscale1);  // RGB -> greyscale
 		gaussian_filter(gscale1, gscale1);
@@ -230,6 +207,15 @@ int main()
 		ic_2 = ic_arr[1]; jc_2 = jc_arr[1];
 		ic_3 = ic_arr[2]; jc_3 = jc_arr[2];
 		ic_4 = ic_arr[3]; jc_4 = jc_arr[3];
+
+		centroid_array_for_control[0] = (int) ic_arr[0] + 0.5;
+		centroid_array_for_control[1] = (int) jc_arr[0] + 0.5;
+		centroid_array_for_control[2] = (int) ic_arr[1] + 0.5;
+		centroid_array_for_control[3] = (int) jc_arr[1] + 0.5;
+		centroid_array_for_control[4] = (int) ic_arr[2] + 0.5;
+		centroid_array_for_control[5] = (int) jc_arr[2] + 0.5;
+		centroid_array_for_control[6] = (int) ic_arr[3] + 0.5;
+		centroid_array_for_control[7] = (int) jc_arr[3] + 0.5;
 
 		// Commit centroids to shared memory
 		sharedData->ic_1 = ic_1; sharedData->jc_1 = jc_1;
