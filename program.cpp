@@ -26,7 +26,7 @@ int* centroid_array_for_control = new int[14];
 int main()
 {
 	AllocConsole();
-	freopen("CONOUT$", "w", stdout);
+	//freopen("CONOUT$", "w", stdout);
 
 	int radius, width, height, cam_number, nlabels, tlow = 80, thigh = 100, tlow2 = 80, thigh2 = 100, min_label_size = 400, max_label_size = 5000;
 	bool upHeld = false, downHeld = false, leftHeld = false, rightHeld = false;
@@ -56,7 +56,7 @@ int main()
 	activate_vision();
 
 	cout << "\npress space key to acquire image\n";
-	while (!KEY(VK_SPACE));
+
 
 	cam_number = 1;
 	width = 640;
@@ -64,6 +64,8 @@ int main()
 	radius = 3;
 
 	activate_camera(cam_number, height, width);
+
+	cout << "\npress space key to acquire image\n";
 
 	rgb1.width = width;  rgb1.height = height;  rgb1.type = RGB_IMAGE;
 	rgb2.width = width;  rgb2.height = height;  rgb2.type = RGB_IMAGE;

@@ -1,4 +1,5 @@
 #include <cmath>
+#include <iostream>
 //#include <numbers>
 
 #include "vehicle.h"
@@ -7,8 +8,9 @@
 void vehicle::update_position_orientation() {
 	vehicle_center_x = (*obstacle_centroid_x + *rear_centroid_x) / 2;
 	vehicle_center_y = (*obstacle_centroid_y + *rear_centroid_y) / 2;
-
+	std::cout << "Updated vehicle center";
 	orientation = atan2((*obstacle_centroid_y - *rear_centroid_y), (*obstacle_centroid_x - *rear_centroid_x));
+	std::cout << "Updated vehicle orientation";
 };
 
 // Update component centroid locations, recalculate vehicle center and orientation
@@ -41,6 +43,7 @@ vehicle::vehicle() {
 
 // Preferred Constructor places vehicle where it is found on the world map
 vehicle::vehicle(int *front_centroid_x, int *front_centroid_y, int *back_centroid_x, int *back_centroid_y, int vehicle_diameter, int vehicle_keep_out) {
+	std::cout << "Initiliazing centroids";
 	obstacle_centroid_x = front_centroid_x;
 	obstacle_centroid_y = front_centroid_y;
 
@@ -50,7 +53,9 @@ vehicle::vehicle(int *front_centroid_x, int *front_centroid_y, int *back_centroi
 	diameter = vehicle_diameter;
 	keep_out = vehicle_keep_out;
 
+	std::cout << "Updating position";
 	update_position_orientation();
+	std::cout << "Updated position";
 };
 
 // Getters

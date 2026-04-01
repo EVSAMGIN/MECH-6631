@@ -27,6 +27,8 @@ double enemy_direction, direction_error;
 char *serial_instruction = new char[5];
 
 void mapper(int *centroid_array, int width, int height) {
+
+	std::cout << "Centroid Array" << centroid_array;
 	
 	// Initial setup, only run once:
 
@@ -99,7 +101,9 @@ void mapper(int *centroid_array, int width, int height) {
 	static int *control_back_x = centroid_array + GREEN_CENTROID_INDEX;
 	static int *control_back_y = centroid_array + GREEN_CENTROID_INDEX + 1;
 
-	static vehicle our_vehicle(control_front_x, control_front_y, control_back_x, control_back_y, 9, 1);
+	std::cout << "Something\n\n";
+
+	static vehicle* our_vehicle=new vehicle(control_front_x, control_front_y, control_back_x, control_back_y, 9, 1);
 
 	std::cout << "Created friendly robot vehicle object\n\n";
 
@@ -167,9 +171,9 @@ void mapper(int *centroid_array, int width, int height) {
 	*/
 	
 	//enemy_direction = atan2((enemy_vehicle.get_center_y() - our_vehicle.get_vehicle_center_y()), (enemy_vehicle.get_center_x()) - our_vehicle.get_vehicle_center_x());
-	enemy_direction = atan2((centroid_array[BLUE_CENTROID_INDEX + 1] - our_vehicle.get_vehicle_center_y()), (centroid_array[BLUE_CENTROID_INDEX] - our_vehicle.get_vehicle_center_x()));
+	enemy_direction = atan2((centroid_array[BLUE_CENTROID_INDEX + 1] - our_vehicle->get_vehicle_center_y()), (centroid_array[BLUE_CENTROID_INDEX] - our_vehicle->get_vehicle_center_x()));
 
-	direction_error = enemy_direction - our_vehicle.get_orientation();
+	direction_error = enemy_direction - our_vehicle->get_orientation();
 
 	while ( abs(direction_error) > 0.1 ) {
 		if (direction_error < 0) {
@@ -189,9 +193,9 @@ void mapper(int *centroid_array, int width, int height) {
 			std::cout << "Sent turn right command.\n\n";
 		}
 
-		our_vehicle.update_position_orientation();
+		our_vehicle->update_position_orientation();
 		enemy_vehicle.update_position_orientation();
-		direction_error = enemy_direction - our_vehicle.get_orientation();
+		direction_error = enemy_direction - our_vehicle->get_orientation();
 
 		std::cout << "Updated vehicle position.\n\n";
 	}
