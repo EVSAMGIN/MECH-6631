@@ -3,6 +3,11 @@
 #include <iostream>
 #include <cmath>
 #include <Windows.h>
+#include <vector>
+#include <thread>
+#include <atomic>
+#include <string>
+#include <mutex>
 
 #define KEY(c) ( GetAsyncKeyState((int)(c)) & (SHORT)0x8000 )
 
@@ -22,8 +27,12 @@ int main()
 	AllocConsole();
 	freopen("CONOUT$", "w", stdout);
 
-	int radius, width, height, cam_number, nlabels, tvalue = 70, min_label_size = 200;
+    int radius, width, height, cam_number, nlabels, tlow = 40, thigh = 65, tlow2 = 70, thigh2 = 100, min_label_size = 1000, max_label_size = 5000;
 	bool upHeld = false, downHeld = false, leftHeld = false, rightHeld = false;
+	bool maxIncHeld = false, maxDecHeld = false;
+    bool thighUpHeld = false, thighDownHeld = false;
+	bool toggleHeld = false;
+	int activeRange = 1; // 1 => range1, 2 => range2
 	double ic_1, jc_1, ic_2, jc_2, ic_3, jc_3, ic_4, jc_4;
 	image rgb1, rgb2,rgb3, gscale1, gscale2, label;
 
@@ -40,7 +49,7 @@ int main()
 	while (!KEY(VK_SPACE));
 
 	cam_number = 0;
-	width  = 640;
+	width = 640;
 	height = 480;
 	radius = 3;
 
@@ -51,7 +60,7 @@ int main()
 	rgb3.width = width;  rgb3.height = height;  rgb3.type = RGB_IMAGE;
 	gscale1.width = width; gscale1.height = height; gscale1.type = GREY_IMAGE;
 	gscale2.width = width; gscale2.height = height; gscale2.type = GREY_IMAGE;
-	label.type   = LABEL_IMAGE; label.width = width; label.height = height;
+	label.type = LABEL_IMAGE; label.width = width; label.height = height;
 
 	allocate_image(rgb1);
 	allocate_image(rgb2);
@@ -66,48 +75,134 @@ int main()
 
 	while (1) {
 
+
 		double t_start = high_resolution_time();
 
 		acquire_image(rgb1, cam_number);
 		scale(rgb1, rgb2);
 		copy(rgb2, rgb3); //For inspection
 		copy(rgb2, gscale1);  // RGB -> greyscale
+		gaussian_filter(gscale1, gscale1);
+		gaussian_filter(gscale1, gscale1);
 		lowpass_filter(gscale1, gscale2);
 		highpass_filter(gscale2, gscale1);
+		
+		
 		copy(gscale1, rgb1); //Filtered image copied for inspection later
 
-		// Up/down arrow: adjust threshold (1-254)
-		if (KEY(VK_UP) && !upHeld)   { if (tvalue < 254) tvalue++; cout << "  threshold=" << tvalue << "\n"; upHeld   = true; }
-		if (KEY(VK_DOWN) && !downHeld) { if (tvalue >   1) tvalue--; cout << "  threshold=" << tvalue << "\n"; downHeld = true; }
-		if (!KEY(VK_UP))   upHeld   = false;
-		if (!KEY(VK_DOWN)) downHeld = false;
-		if (KEY(VK_RIGHT) && !rightHeld) { if (min_label_size < 10000) min_label_size++; cout << "  min_label_size=" << min_label_size << "\n"; rightHeld = true; }
-		if (KEY(VK_LEFT)  && !leftHeld)  { if (min_label_size >     1) min_label_size--; cout << "  min_label_size=" << min_label_size << "\n"; leftHeld  = true; }
-		if (!KEY(VK_RIGHT)) rightHeld = false;
-		if (!KEY(VK_LEFT))  leftHeld  = false;
+        // Toggle active range with 'T' (selects which range Up/Down and PageUp/PageDown adjust)
+		if (KEY('T') && !toggleHeld) { activeRange = (activeRange == 1) ? 2 : 1; cout << "Active range=" << activeRange << "\n"; toggleHeld = true; }
+		if (!KEY('T')) toggleHeld = false;
 
-		threshold(gscale1, gscale2, tvalue);
-		invert(gscale2, gscale2);
+		// Adjust lower threshold with Up/Down arrows (range 1-254) for active range
+		if (KEY(VK_UP) && !upHeld) {
+			if (activeRange == 1) { if (tlow < 254) tlow++; }
+			else { if (tlow2 < 254) tlow2++; }
+			cout << "  tlow=" << tlow << " thigh=" << thigh << "  tlow2=" << tlow2 << " thigh2=" << thigh2 << "  (active=" << activeRange << ")\n";
+			upHeld = true;
+		}
+		if (KEY(VK_DOWN) && !downHeld) {
+			if (activeRange == 1) { if (tlow > 1) tlow--; }
+			else { if (tlow2 > 1) tlow2--; }
+			cout << "  tlow=" << tlow << " thigh=" << thigh << "  tlow2=" << tlow2 << " thigh2=" << thigh2 << "  (active=" << activeRange << ")\n";
+			downHeld = true;
+		}
+		if (!KEY(VK_UP))   upHeld = false;
+		if (!KEY(VK_DOWN)) downHeld = false;
+
+		// Adjust upper threshold with PageUp/PageDown (range 1-254) for active range
+		if (KEY(VK_PRIOR) && !thighUpHeld) {
+			if (activeRange == 1) { if (thigh < 254) thigh++; }
+			else { if (thigh2 < 254) thigh2++; }
+			cout << "  tlow=" << tlow << " thigh=" << thigh << "  tlow2=" << tlow2 << " thigh2=" << thigh2 << "  (active=" << activeRange << ")\n";
+			thighUpHeld = true;
+		}
+		if (KEY(VK_NEXT) && !thighDownHeld) {
+			if (activeRange == 1) { if (thigh > 1) thigh--; }
+			else { if (thigh2 > 1) thigh2--; }
+			cout << "  tlow=" << tlow << " thigh=" << thigh << "  tlow2=" << tlow2 << " thigh2=" << thigh2 << "  (active=" << activeRange << ")\n";
+			thighDownHeld = true;
+		}
+		if (!KEY(VK_PRIOR)) thighUpHeld = false;
+		if (!KEY(VK_NEXT)) thighDownHeld = false;
+
+		// Adjust minimum label size with Left/Right arrows
+		if (KEY(VK_RIGHT) && !rightHeld) { if (min_label_size < 10000) min_label_size+=100; cout << "  min_label_size=" << min_label_size << "\n"; rightHeld = true; }
+		if (KEY(VK_LEFT) && !leftHeld) { if (min_label_size > 1) min_label_size-=100; cout << "  min_label_size=" << min_label_size << "\n"; leftHeld = true; }
+		if (!KEY(VK_RIGHT)) rightHeld = false;
+		if (!KEY(VK_LEFT))  leftHeld = false;
+
+		// Adjust maximum label size with '[' and ']' keys (range 1..10000)
+		if (KEY(']') && !maxIncHeld) { if (max_label_size < 10000) max_label_size++; cout << "  max_label_size=" << max_label_size << "\n"; maxIncHeld = true; }
+		if (KEY('[') && !maxDecHeld) { if (max_label_size > 1) max_label_size--; cout << "  max_label_size=" << max_label_size << "\n"; maxDecHeld = true; }
+		if (!KEY(']')) maxIncHeld = false;
+		if (!KEY('[')) maxDecHeld = false;
+
+        threshold_range(gscale1, gscale2, tlow, thigh, tlow2, thigh2);
+		//erode(gscale2, gscale2); 
+		//dialate(gscale2, gscale2);
+		//invert(gscale2, gscale2);
 		label_image(gscale2, label, nlabels);
 		copy(gscale2, rgb2); //for inspection
 
 		// Find first 4 labels meeting min_label_size and draw their centroids
-		i2byte *pl = (i2byte *)label.pdata;
+		i2byte* pl = (i2byte*)label.pdata;
+		int np = width * height;
+
+		// 1) count pixels per label in one pass
+		std::vector<int> counts(nlabels + 1, 0);
+		for (int k = 0; k < np; ++k) {
+			int lab = pl[k];
+			if (lab >= 0 && lab <= nlabels) counts[lab]++;
+		}
+
+       // 2) removed: previously small/out-of-range labels were blackened here
+		//    keep original label image so tracking/selection uses label data directly
+
+        // 3) select labels and compute centroids
 		double ic_arr[4] = {}, jc_arr[4] = {};
+		int size_arr[4] = {0,0,0,0};
 		int found = 0;
-		for (int n = 1; n <= nlabels && found < 4; n++) {
-			int c = 0;
-			for (int j = 0; j < height; j++) {
-				for (int i = 0; i < width; i++) {
-					if (pl[i + width * j] == n) c++;
-				}
+
+		if (trackingMode.load()) {
+			// track only the labels previously captured
+			int tracked_local[4] = {0,0,0,0};
+			{
+				std::lock_guard<std::mutex> lk(trackMutex);
+				for (int i = 0; i < 4; ++i) tracked_local[i] = tracked_labels[i];
 			}
-			if (c >= min_label_size) {
+			for (int i = 0; i < 4 && found < 4; ++i) {
+				int lab = tracked_local[i];
+				if (lab <= 0) continue;
+				if (lab > nlabels) {
+					cout << "Tracked label " << lab << " not present (nlabels=" << nlabels << ")\n";
+					continue;
+				}
+				if (counts[lab] < min_label_size || counts[lab] > max_label_size) {
+					cout << "Tracked label " << lab << " out of size range (size=" << counts[lab] << ")\n";
+					continue;
+				}
+				centroid(gscale2, label, lab, ic_arr[found], jc_arr[found]);
+				draw_marker(rgb2.pdata, width, height, radius, ic_arr[found], jc_arr[found]);
+				size_arr[found] = counts[lab];
+				found++;
+			}
+		} else {
+			// not tracking: pick first up to 4 labels that meet size criteria
+			for (int n = 1; n <= nlabels && found < 4; ++n) {
+				if (counts[n] < min_label_size || counts[n] > max_label_size) continue; // reuse computed counts
 				centroid(gscale2, label, n, ic_arr[found], jc_arr[found]);
 				draw_marker(rgb2.pdata, width, height, radius, ic_arr[found], jc_arr[found]);
+				size_arr[found] = counts[n];
+				// record currently selected labels so user can 'track' them
+				{
+					std::lock_guard<std::mutex> lk(trackMutex);
+					selected_labels[found] = n;
+				}
 				found++;
 			}
 		}
+
 		ic_1 = ic_arr[0]; jc_1 = jc_arr[0];
 		ic_2 = ic_arr[1]; jc_2 = jc_arr[1];
 		ic_3 = ic_arr[2]; jc_3 = jc_arr[2];
@@ -130,18 +225,18 @@ int main()
 		sharedData->frame++;
 
 		double loop_time = high_resolution_time() - t_start;
-
+	
 		view_rgb_image(rgb2);
 
 		if (KEY(VK_RETURN))
-			cout << "\n--- centroids ---"
-			     << "\n  1: ic=" << ic_1 << " jc=" << jc_1
-			     << "\n  2: ic=" << ic_2 << " jc=" << jc_2
-			     << "\n  3: ic=" << ic_3 << " jc=" << jc_3
-			     << "\n  4: ic=" << ic_4 << " jc=" << jc_4
-			     << "\n  loop time=" << loop_time
-			     << "\n  nlabels=" << nlabels
-		     << "\n  threshold=" << tvalue << "\n";
+           cout << "\n--- centroids ---"
+			<< "\n  1: ic=" << ic_1 << " jc=" << jc_1 << " size=" << size_arr[0]
+			<< "\n  2: ic=" << ic_2 << " jc=" << jc_2 << " size=" << size_arr[1]
+			<< "\n  3: ic=" << ic_3 << " jc=" << jc_3 << " size=" << size_arr[2]
+			<< "\n  4: ic=" << ic_4 << " jc=" << jc_4 << " size=" << size_arr[3]
+			<< "\n  loop time=" << loop_time
+			<< "\n  nlabels=" << nlabels;
+				//<< "\n  threshold=" << tvalue << "\n";
 
 		if (KEY('X')) break;
 	}
