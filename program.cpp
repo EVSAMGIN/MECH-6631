@@ -168,7 +168,7 @@ int main()
 	//freopen("CONOUT$", "w", stdout);
 
 	int radius, width, height, size, cam_number, pthresh;
-	double ic_b, jc_b, ic_g, jc_g, ic_r, jc_r, ic_y, jc_y, signal;
+	double ic_b, jc_b, ic_g, jc_g, ic_r, jc_r, ic_y, jc_y, signal, ic_arr[4], jc_arr[4];
 	image rgb1, rgb2, rgb3;
 	ibyte* p0;
 
@@ -314,6 +314,13 @@ int main()
 		sharedData->ic_r = ic_r; sharedData->jc_r = jc_r;
 		sharedData->ic_y = ic_y; sharedData->jc_y = jc_y;
 		sharedData->frame++;
+
+		//Array storage for track.cpp
+		//0-blue, 1-green,2-red,3-yellow
+		ic_arr[0] = ic_b; jc_arr[0] = jc_b;
+		ic_arr[1] = ic_g; jc_arr[1] = jc_g;
+		ic_arr[2] = ic_r; jc_arr[2] = jc_r;
+		ic_arr[3] = ic_y; jc_arr[3] = jc_y;
 
 		double loop_time = high_resolution_time() - t_start; //timer
 
