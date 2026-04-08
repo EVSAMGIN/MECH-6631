@@ -22,6 +22,7 @@ class obstacle
 		int get_center_y();
 		int get_diameter();
 		int get_keep_out();
+		int obstacle_radius();
 
 		// Setters
 

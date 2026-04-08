@@ -119,7 +119,6 @@ void mapper(int *centroid_array, int width, int height) {
 	std::cout << "Created enemy robot vehicle object\n\n";
 
 	//// Obstacles and Cost-Map Initialization
-	/*
 	if ((centroid_array[OBSTACLE_1_CENTROID_INDEX] > 0) && (centroid_array[OBSTACLE_1_CENTROID_INDEX + 1] > 0)) {
 		static obstacle obstacle_1(centroid_array + OBSTACLE_1_CENTROID_INDEX, centroid_array + OBSTACLE_1_CENTROID_INDEX + 1, 4, 1);
 
@@ -129,19 +128,19 @@ void mapper(int *centroid_array, int width, int height) {
 			if ((centroid_array[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array[OBSTACLE_3_CENTROID_INDEX + 1] > 0)) {
 				static obstacle obstacle_3(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_3_CENTROID_INDEX + 1, 4, 1);
 
-				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1, &obstacle_2, &obstacle_3);
+//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1, &obstacle_2, &obstacle_3);
 			}
 			else {
-				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1, &obstacle_2);
+//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1, &obstacle_2);
 			}
 		}
 		else {
 			if ((centroid_array[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array[OBSTACLE_3_CENTROID_INDEX + 1] > 0)) {
 				static obstacle obstacle_3(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_3_CENTROID_INDEX + 1, 4, 1);
 
-				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1, &obstacle_3);
+//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1, &obstacle_3);
 			} else {
-				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1);
+//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1);
 			}
 		}
 	} else {
@@ -151,24 +150,23 @@ void mapper(int *centroid_array, int width, int height) {
 			if ((centroid_array[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array[OBSTACLE_3_CENTROID_INDEX + 1] > 0)) {
 				static obstacle obstacle_3(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_3_CENTROID_INDEX + 1, 4, 1);
 
-				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_2, &obstacle_3);
+//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_2, &obstacle_3);
 			}
 			else {
-				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_2);
+//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_2);
 			}
 		}
 		else {
 			if ((centroid_array[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array[OBSTACLE_3_CENTROID_INDEX + 1] > 0)) {
 				static obstacle obstacle_3(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_3_CENTROID_INDEX + 1, 4, 1);
 
-				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_3);
+//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_3);
 			}
 			else {
-				static cost_map map(width, height, &our_vehicle, &enemy_vehicle);
+//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle);
 			}
 		}
 	}
-	*/
 	
 	//enemy_direction = atan2((enemy_vehicle.get_center_y() - our_vehicle.get_vehicle_center_y()), (enemy_vehicle.get_center_x()) - our_vehicle.get_vehicle_center_x());
 	enemy_direction = atan2((centroid_array[BLUE_CENTROID_INDEX + 1] - our_vehicle->get_vehicle_center_y()), (centroid_array[BLUE_CENTROID_INDEX] - our_vehicle->get_vehicle_center_x()));
@@ -204,8 +202,18 @@ void mapper(int *centroid_array, int width, int height) {
 	// Orient robot towards enemy if needed (center them along the robot orientation)
 	// Calculate path to enemy
 	// // Accept/Reject path: check for obstacle intersections
-	// // // Check half of robot diamter lengths along path for obstacle intersections
-	// // // If intersection exists, break loop and shift to the side of obstacle center
+	// // // Need to check each obstacle that exists
+	// // This checks if the obstacle is close enough to interfere with the robot moving in a straight line to the target
+	if ( ( (centroid_array[BLUE_CENTROID_INDEX + 1] - our_vehicle->get_vehicle_center_y() )*obstacle_1.get_center_x() - (centroid_array[BLUE_CENTROID_INDEX] - our_vehicle->get_vehicle_center_x())*obstacle_1.get_center_y() + centroid_array[BLUE_CENTROID_INDEX]*our_vehicle->get_vehicle_center_y() - centroid_array[BLUE_CENTROID_INDEX+1] - our_vehicle->get_vehicle_center_x())^2 < ((centroid_array[BLUE_CENTROID_INDEX + 1] - our_vehicle->get_vehicle_center_y())^2 - (centroid_array[BLUE_CENTROID_INDEX] - our_vehicle->get_vehicle_center_x())^2 )*(obstacle_1.obstacle_radius^2)^2 ) {
+		// Go to point on edge of keep-out zone
+		double obstacle_direction = atan2((obstacle_1.get_center_y() - our_vehicle->get_vehicle_center_y()), (obstacle_1.get_center_x() - our_vehicle->get_vehicle_center_x()));
+		if ( (enemy_direction - obstacle_direction) < 0) {
+			// Find point along obstacle radius that is perpendicular to enemy_direction
+		}
+		else {
+			// Find other point along obstacle radius that is perpendicular to enemy_direction
+		}
+	}
 	
 
 	// Send commands to robot over Bluetooth

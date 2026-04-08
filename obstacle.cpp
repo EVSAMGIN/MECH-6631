@@ -34,6 +34,10 @@ int obstacle::get_keep_out() {
 	return keep_out;
 }
 
+int obstacle::obstacle_radius() {
+	return diameter / 2 + keep_out;
+}
+
 // Setters
 
 void obstacle::set_center_x(int *new_center_x) {
