@@ -14,12 +14,13 @@ struct ColourFilter {
 	ibyte hB, hG, hR;
 };
 
-struct CentroidData {
-	double ic_1, jc_1;
-	double ic_2, jc_2;
-	double ic_3, jc_3;
-	double ic_4, jc_4;
-	int frame;
+struct TargetPositions {
+	double ic_car1_1, jc_car1_1; bool valid_car1_1;
+	double ic_car1_2, jc_car1_2; bool valid_car1_2;
+	double ic_car2_1, jc_car2_1; bool valid_car2_1;
+	double ic_car2_2, jc_car2_2; bool valid_car2_2;
+	double ic_obs1, jc_obs1;   bool valid_obs1;
+	double ic_obs2, jc_obs2;   bool valid_obs2;
 };
 
 void colour_filter(ibyte* p0, int width, int height, ColourFilter& f, int pthresh);
