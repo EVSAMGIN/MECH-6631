@@ -19,8 +19,8 @@ struct TargetPositions {
 	double ic_car1_2, jc_car1_2; bool valid_car1_2;
 	double ic_car2_1, jc_car2_1; bool valid_car2_1;
 	double ic_car2_2, jc_car2_2; bool valid_car2_2;
-	double ic_obs1, jc_obs1;   bool valid_obs1;
-	double ic_obs2, jc_obs2;   bool valid_obs2;
+	double ic_obs1,   jc_obs1;   bool valid_obs1;
+	double ic_obs2,   jc_obs2;   bool valid_obs2;
 };
 
 void colour_filter(ibyte* p0, int width, int height, ColourFilter& f, int pthresh);
