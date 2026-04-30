@@ -12,6 +12,7 @@ using namespace std;
 #include "vision.h"
 #include "timer.h"
 #include "vision_custom.h"
+#include "world_map.h"
 
 #define KEY(c) ( GetAsyncKeyState((int)(c)) & (SHORT)0x8000 )
 
