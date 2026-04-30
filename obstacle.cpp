@@ -2,10 +2,10 @@
 
 // Default Constructor places obstacle outside of world map
 obstacle::obstacle() {
-	*obstacle_centroid_x = -10;
-	*obstacle_centroid_y = -10;
-	diameter = 0;
-	keep_out = 1;
+//	obstacle_centroid_x = -10;
+//	*obstacle_centroid_y = -10;
+//	diameter = 0;
+//	keep_out = 1;
 }
 
 // Preferred Constructor places obstacle where it is found on the world map
@@ -40,11 +40,11 @@ int obstacle::obstacle_radius() {
 
 // Setters
 
-void obstacle::set_center_x(int *new_center_x) {
+void obstacle::set_center_x(int* new_center_x) {
 	obstacle_centroid_x = new_center_x;
 }
 
-void obstacle::set_center_y(int *new_center_y) {
+void obstacle::set_center_y(int* new_center_y) {
 	obstacle_centroid_y = new_center_y;
 }
 

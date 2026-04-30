@@ -15,7 +15,7 @@ class vehicle : public obstacle
 		void update_position_orientation();
 
 		// Update component centroid locations, recalculate vehicle center and orientation
-		void update_position_orientation(int *front_centroid_x, int *front_centroid_y, int *back_centroid_x, int *back_centroid_y);
+		void update_position_orientation(int &front_centroid_x, int &front_centroid_y, int &back_centroid_x, int &back_centroid_y);
 
 		// Default Constructor places vehicle outside of world map
 		vehicle();

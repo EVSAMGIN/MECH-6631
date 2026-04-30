@@ -58,7 +58,7 @@ int main()
 	cout << "\npress space key to acquire image\n";
 
 
-	cam_number = 1;
+	cam_number = 0;
 	width = 640;
 	height = 480;
 	radius = 3;
