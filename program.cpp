@@ -71,7 +71,7 @@ int viewMode = 0;
 // All mask parameters start zeroed - sample_mask_at_cursor fills every field at selection time
 MaskParameters pm[NTARGETS] = {};
 
-TargetPositions target_positions = {};
+TargetPositions target_positions = {}; // Centroid Positions stored here!!!!! 
 
 
 int main()
