@@ -20,7 +20,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -95,13 +95,21 @@
     <Library Include="strmbasd.lib" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="obstacle.cpp" />
     <ClCompile Include="program.cpp" />
+    <ClCompile Include="serial_com.cpp" />
     <ClCompile Include="timer.cpp" />
+    <ClCompile Include="vehicle.cpp" />
     <ClCompile Include="vision.cpp" />
     <ClCompile Include="vision_custom.cpp" />
+    <ClCompile Include="world_map.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="obstacle.h" />
+    <ClInclude Include="serial_com.h" />
+    <ClInclude Include="vehicle.h" />
     <ClInclude Include="vision_custom.h" />
+    <ClInclude Include="world_map.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
