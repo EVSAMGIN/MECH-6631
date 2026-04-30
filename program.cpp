@@ -47,8 +47,8 @@ const int IMAGE_WIDTH  = 640;
 const int IMAGE_HEIGHT = 480;
 int cam_number = 0;
 
-// Radius (pixels) of the circle sampled around the cursor to derive all mask parameters.
-// Tune this to be comfortably inside your target disc at typical operating distance.
+// Radius in pixels for the sample circle within cursor
+// Tune this 
 const int SAMPLE_RADIUS = 5;
 
 // Object indices
