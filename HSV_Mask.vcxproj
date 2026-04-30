@@ -107,7 +107,9 @@
   <ItemGroup>
     <ClInclude Include="obstacle.h" />
     <ClInclude Include="serial_com.h" />
+    <ClInclude Include="timer.h" />
     <ClInclude Include="vehicle.h" />
+    <ClInclude Include="vision.h" />
     <ClInclude Include="vision_custom.h" />
     <ClInclude Include="world_map.h" />
   </ItemGroup>

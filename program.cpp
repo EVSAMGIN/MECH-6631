@@ -1,4 +1,3 @@
-
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -8,7 +7,7 @@
 
 using namespace std;
 
-#include "image_transfer.h"
+//#include "image_transfer.h"
 #include "vision.h"
 #include "timer.h"
 #include "vision_custom.h"

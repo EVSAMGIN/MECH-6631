@@ -1,3 +1,4 @@
+#include "Windows.h"
 
 int open_serial(char *port_name, HANDLE &h, int speed = 1);
 // note the default for speed is 1 (115200 bps / baud)

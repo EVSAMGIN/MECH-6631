@@ -1,4 +1,11 @@
+#pragma once
 
+#include <cmath>
+#include <iostream>
+#include <fstream>
+#include "image_transfer.h"
+
+#define PI 3.14159265
 // computer vision functions header
 
 // copy a into b

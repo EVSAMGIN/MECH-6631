@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include "vision.h"
+//#include "image_transfer.h"
 
 #define PI 3.14159265
 

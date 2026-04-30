@@ -10,7 +10,7 @@
 using namespace std;
 
 // include this header file for basic image transfer functions
-#include "image_transfer.h"
+//#include "image_transfer.h"
 
 // include this header file for computer vision functions
 #include "vision.h"
