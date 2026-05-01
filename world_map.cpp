@@ -1,5 +1,3 @@
-#pragma once
-
 #include <cmath>
 
 #include "world_map.h"
@@ -7,6 +5,7 @@
 #include "vehicle.h"
 //#include "cost_map.h"
 #include "serial_com.h"
+#include "vision_custom.h"
 
 // For Serial COM Port
 // From https://learn.microsoft.com/en-us/windows/win32/devio/configuring-a-communications-resource
@@ -18,13 +17,13 @@
 
 // Centroid index values for centroid array
 
-static const int RED_CENTROID_INDEX        =  0;
-static const int GREEN_CENTROID_INDEX      =  2;
-static const int BLUE_CENTROID_INDEX       =  4;
-static const int YELLOW_CENTROID_INDEX     =  6;
-static const int OBSTACLE_1_CENTROID_INDEX =  8;
-static const int OBSTACLE_2_CENTROID_INDEX = 10;
-static const int OBSTACLE_3_CENTROID_INDEX = 12;
+static const int RED_CENTROID_INDEX        = 0;
+static const int GREEN_CENTROID_INDEX      = 1;
+static const int BLUE_CENTROID_INDEX       = 2;
+static const int YELLOW_CENTROID_INDEX     = 3;
+static const int OBSTACLE_1_CENTROID_INDEX = 4;
+static const int OBSTACLE_2_CENTROID_INDEX = 5;
+static const int OBSTACLE_3_CENTROID_INDEX = 6;
 
 int* waypoint_array = new int[14];
 int new_x, new_y, position_error, position_threshold = 2, laser_threshold = 10;
@@ -33,9 +32,9 @@ double waypoint_direction, direction_error, obstacle_direction, obstacle_perpend
 //char *serial_instruction = new char[5];
 
 // Centroid pointers
-int *control_front_x, *control_front_y, *control_back_x, *control_back_y;
-int   *enemy_front_x,   *enemy_front_y,   *enemy_back_x,   *enemy_back_y;
-int default_centroid_position = -10;
+double *control_front_x, *control_front_y, *control_back_x, *control_back_y;
+double   *enemy_front_x,   *enemy_front_y,   *enemy_back_x,   *enemy_back_y;
+double default_centroid_position = -10;
 
 obstacle obstacle_1(&default_centroid_position, &default_centroid_position, 5, 1);
 obstacle obstacle_2(&default_centroid_position, &default_centroid_position, 5, 1);
@@ -46,13 +45,13 @@ HANDLE h1;
 int speed = 0;
 
 // Need to include passthrough for keyboard checks?
-void mapper(int *centroid_array, int width, int height) {
+void mapper(TargetPositions centroid_array, int width, int height) {
 
 	// Accept centroid array
 	// Create vehicle and obstacle objects
 	// Develop waypoint buffer
 	// Find path through waypoint buffer, update as needed
-	std::cout << "Centroid Array" << centroid_array;
+	std::cout << "Centroid Array";// << centroid_array;
 	
 	// Initial setup, only run once:
 
@@ -125,10 +124,10 @@ void mapper(int *centroid_array, int width, int height) {
 
 	//// Our robot
 
-	control_front_x = centroid_array + RED_CENTROID_INDEX;
-	control_front_y = centroid_array + RED_CENTROID_INDEX + 1;
-	control_back_x = centroid_array + GREEN_CENTROID_INDEX;
-	control_back_y = centroid_array + GREEN_CENTROID_INDEX + 1;
+	control_front_x = centroid_array.ic + RED_CENTROID_INDEX;
+	control_front_y = centroid_array.jc + RED_CENTROID_INDEX;
+	control_back_x = centroid_array.ic + GREEN_CENTROID_INDEX;
+	control_back_y = centroid_array.jc + GREEN_CENTROID_INDEX;
 
 	std::cout << "Something\n\n";
 
@@ -138,29 +137,29 @@ void mapper(int *centroid_array, int width, int height) {
 
 	//// Enemy robot
 
-	enemy_front_x = centroid_array + BLUE_CENTROID_INDEX;
-	enemy_front_y = centroid_array + BLUE_CENTROID_INDEX + 1;
-	enemy_back_x = centroid_array + YELLOW_CENTROID_INDEX;
-	enemy_back_y = centroid_array + YELLOW_CENTROID_INDEX + 1;
+	enemy_front_x = centroid_array.ic + BLUE_CENTROID_INDEX;
+	enemy_front_y = centroid_array.jc + BLUE_CENTROID_INDEX;
+	enemy_back_x = centroid_array.ic + YELLOW_CENTROID_INDEX;
+	enemy_back_y = centroid_array.jc + YELLOW_CENTROID_INDEX;
 
 	vehicle enemy_vehicle(enemy_front_x, enemy_front_y, enemy_back_x, enemy_back_y, 9, 1);
 
 	std::cout << "Created enemy robot vehicle object\n\n";
 
 	//// Obstacle Initialization
-	if ((centroid_array[OBSTACLE_1_CENTROID_INDEX] > 0) && (centroid_array[OBSTACLE_1_CENTROID_INDEX + 1] > 0)) {
-		obstacle_1.set_center_x(centroid_array + OBSTACLE_1_CENTROID_INDEX);
-		obstacle_1.set_center_y(centroid_array + OBSTACLE_1_CENTROID_INDEX + 1);//, centroid_array + OBSTACLE_1_CENTROID_INDEX + 1, 4, 1);
+	if ((centroid_array.ic[OBSTACLE_1_CENTROID_INDEX] > 0) && (centroid_array.jc[OBSTACLE_1_CENTROID_INDEX] > 0)) {
+		obstacle_1.set_center_x(centroid_array.ic + OBSTACLE_1_CENTROID_INDEX);
+		obstacle_1.set_center_y(centroid_array.jc + OBSTACLE_1_CENTROID_INDEX);//, centroid_array + OBSTACLE_1_CENTROID_INDEX + 1, 4, 1);
 
-		if ((centroid_array[OBSTACLE_2_CENTROID_INDEX] > 0) && (centroid_array[OBSTACLE_2_CENTROID_INDEX + 1] > 0)) {
+		if ((centroid_array.ic[OBSTACLE_2_CENTROID_INDEX] > 0) && (centroid_array.jc[OBSTACLE_2_CENTROID_INDEX] > 0)) {
 			//static obstacle obstacle_2(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_2_CENTROID_INDEX + 1, 4, 1);
-			obstacle_2.set_center_x(centroid_array + OBSTACLE_2_CENTROID_INDEX);
-			obstacle_2.set_center_y(centroid_array + OBSTACLE_2_CENTROID_INDEX + 1);
+			obstacle_2.set_center_x(centroid_array.ic + OBSTACLE_2_CENTROID_INDEX);
+			obstacle_2.set_center_y(centroid_array.jc + OBSTACLE_2_CENTROID_INDEX);
 
-			if ((centroid_array[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array[OBSTACLE_3_CENTROID_INDEX + 1] > 0)) {
+			if ((centroid_array.ic[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array.jc[OBSTACLE_3_CENTROID_INDEX] > 0)) {
 				//static obstacle obstacle_3(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_3_CENTROID_INDEX + 1, 4, 1);
-				obstacle_3.set_center_x(centroid_array + OBSTACLE_3_CENTROID_INDEX);
-				obstacle_3.set_center_y(centroid_array + OBSTACLE_3_CENTROID_INDEX + 1);
+				obstacle_3.set_center_x(centroid_array.ic + OBSTACLE_3_CENTROID_INDEX);
+				obstacle_3.set_center_y(centroid_array.jc + OBSTACLE_3_CENTROID_INDEX);
 
 //				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1, &obstacle_2, &obstacle_3);
 			}
@@ -169,10 +168,10 @@ void mapper(int *centroid_array, int width, int height) {
 			}
 		}
 		else {
-			if ((centroid_array[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array[OBSTACLE_3_CENTROID_INDEX + 1] > 0)) {
+			if ((centroid_array.ic[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array.jc[OBSTACLE_3_CENTROID_INDEX] > 0)) {
 				//static obstacle obstacle_3(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_3_CENTROID_INDEX + 1, 4, 1);
-				obstacle_3.set_center_x(centroid_array + OBSTACLE_3_CENTROID_INDEX);
-				obstacle_3.set_center_y(centroid_array + OBSTACLE_3_CENTROID_INDEX + 1);
+				obstacle_3.set_center_x(centroid_array.ic + OBSTACLE_3_CENTROID_INDEX);
+				obstacle_3.set_center_y(centroid_array.jc + OBSTACLE_3_CENTROID_INDEX);
 
 //				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1, &obstacle_3);
 			} else {
@@ -180,15 +179,15 @@ void mapper(int *centroid_array, int width, int height) {
 			}
 		}
 	} else {
-		if ((centroid_array[OBSTACLE_2_CENTROID_INDEX] > 0) && (centroid_array[OBSTACLE_2_CENTROID_INDEX + 1] > 0)) {
+		if ((centroid_array.ic[OBSTACLE_2_CENTROID_INDEX] > 0) && (centroid_array.jc[OBSTACLE_2_CENTROID_INDEX] > 0)) {
 			//static obstacle obstacle_2(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_2_CENTROID_INDEX + 1, 4, 1);
-			obstacle_2.set_center_x(centroid_array + OBSTACLE_2_CENTROID_INDEX);
-			obstacle_2.set_center_y(centroid_array + OBSTACLE_2_CENTROID_INDEX + 1);
+			obstacle_2.set_center_x(centroid_array.ic + OBSTACLE_2_CENTROID_INDEX);
+			obstacle_2.set_center_y(centroid_array.jc + OBSTACLE_2_CENTROID_INDEX);
 
-			if ((centroid_array[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array[OBSTACLE_3_CENTROID_INDEX + 1] > 0)) {
+			if ((centroid_array.ic[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array.jc[OBSTACLE_3_CENTROID_INDEX] > 0)) {
 				//static obstacle obstacle_3(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_3_CENTROID_INDEX + 1, 4, 1);
-				obstacle_3.set_center_x(centroid_array + OBSTACLE_3_CENTROID_INDEX);
-				obstacle_3.set_center_y(centroid_array + OBSTACLE_3_CENTROID_INDEX + 1);
+				obstacle_3.set_center_x(centroid_array.ic + OBSTACLE_3_CENTROID_INDEX);
+				obstacle_3.set_center_y(centroid_array.jc + OBSTACLE_3_CENTROID_INDEX);
 
 //				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_2, &obstacle_3);
 			}
@@ -197,10 +196,10 @@ void mapper(int *centroid_array, int width, int height) {
 			}
 		}
 		else {
-			if ((centroid_array[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array[OBSTACLE_3_CENTROID_INDEX + 1] > 0)) {
+			if ((centroid_array.ic[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array.jc[OBSTACLE_3_CENTROID_INDEX] > 0)) {
 				//static obstacle obstacle_3(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_3_CENTROID_INDEX + 1, 4, 1);
-				obstacle_3.set_center_x(centroid_array + OBSTACLE_3_CENTROID_INDEX);
-				obstacle_3.set_center_y(centroid_array + OBSTACLE_3_CENTROID_INDEX + 1);
+				obstacle_3.set_center_x(centroid_array.ic + OBSTACLE_3_CENTROID_INDEX);
+				obstacle_3.set_center_y(centroid_array.jc + OBSTACLE_3_CENTROID_INDEX);
 
 //				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_3);
 			}
@@ -236,7 +235,7 @@ void mapper(int *centroid_array, int width, int height) {
 		// // 
 		// // waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[1]) - our_vehicle.get_vehicle_center_x());
 		if(obstacle_1.get_center_x() >= 0) {
-			if ( ( (waypoint_array[1] - our_vehicle.get_vehicle_center_y() )*obstacle_1.get_center_x() - (waypoint_array[0] - our_vehicle.get_vehicle_center_x())*obstacle_1.get_center_y() + waypoint_array[0]*our_vehicle.get_vehicle_center_y() - waypoint_array[1] - our_vehicle.get_vehicle_center_x())^2 < ((waypoint_array[1] - our_vehicle.get_vehicle_center_y())^2 - (waypoint_array[0] - our_vehicle.get_vehicle_center_x())^2 )*(obstacle_1.obstacle_radius)^2 ) {
+			if ( ( (waypoint_array[1] - our_vehicle.get_vehicle_center_y() )*obstacle_1.get_center_x() - (waypoint_array[0] - our_vehicle.get_vehicle_center_x())*obstacle_1.get_center_y() + waypoint_array[0]*our_vehicle.get_vehicle_center_y() - waypoint_array[1] - our_vehicle.get_vehicle_center_x())^2 < ((waypoint_array[1] - our_vehicle.get_vehicle_center_y())^2 - (waypoint_array[0] - our_vehicle.get_vehicle_center_x())^2 )*(obstacle_1.obstacle_radius())^2 ) {
 				// Path intersects with keep-out zone, need to find new waypoint
 				obstacle_direction = atan2((obstacle_1.get_center_y() - our_vehicle.get_vehicle_center_y()), (obstacle_1.get_center_x()) - our_vehicle.get_vehicle_center_x());
 				if(waypoint_direction > obstacle_direction) {

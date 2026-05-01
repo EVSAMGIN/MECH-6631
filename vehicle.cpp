@@ -14,7 +14,7 @@ void vehicle::update_position_orientation() {
 };
 
 // Update component centroid locations, recalculate vehicle center and orientation
-void vehicle::update_position_orientation(int &front_centroid_x, int &front_centroid_y, int &back_centroid_x, int &back_centroid_y) {
+void vehicle::update_position_orientation(double &front_centroid_x, double &front_centroid_y, double &back_centroid_x, double &back_centroid_y) {
 	obstacle_centroid_x = &front_centroid_x;
 	obstacle_centroid_y = &front_centroid_y;
 
@@ -42,7 +42,7 @@ vehicle::vehicle() {
 };
 
 // Preferred Constructor places vehicle where it is found on the world map
-vehicle::vehicle(int *front_centroid_x, int *front_centroid_y, int *back_centroid_x, int *back_centroid_y, int vehicle_diameter, int vehicle_keep_out) {
+vehicle::vehicle(double *front_centroid_x, double *front_centroid_y, double *back_centroid_x, double *back_centroid_y, int vehicle_diameter, int vehicle_keep_out) {
 	std::cout << "Initiliazing centroids";
 	obstacle_centroid_x = front_centroid_x;
 	obstacle_centroid_y = front_centroid_y;
@@ -82,10 +82,10 @@ double vehicle::get_orientation() {
 
 // Setters
 
-void vehicle::set_rear_center_x(int* back_centroid_x) {
+void vehicle::set_rear_center_x(double* back_centroid_x) {
 	rear_centroid_x = back_centroid_x;
 }
 
-void vehicle::set_rear_center_y(int* back_centroid_y) {
+void vehicle::set_rear_center_y(double* back_centroid_y) {
 	rear_centroid_y = back_centroid_y;
 }

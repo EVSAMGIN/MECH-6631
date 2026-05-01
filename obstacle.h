@@ -4,8 +4,8 @@
 class obstacle
 {
 	protected:
-		int *obstacle_centroid_x;
-		int *obstacle_centroid_y;
+		double *obstacle_centroid_x;
+		double *obstacle_centroid_y;
 		int diameter, keep_out;
 
 	public:
@@ -14,7 +14,7 @@ class obstacle
 		obstacle();
 
 		// Preferred Constructor places obstacle where it is found on the world map
-		obstacle(int *centroid_x, int *centroid_y, int obstacle_diameter, int obstacle_keep_out);
+		obstacle(double *centroid_x, double *centroid_y, int obstacle_diameter, int obstacle_keep_out);
 
 		// Getters
 
@@ -26,8 +26,8 @@ class obstacle
 
 		// Setters
 
-		void set_center_x(int* new_center_x);
-		void set_center_y(int* new_center_y);
+		void set_center_x(double* new_center_x);
+		void set_center_y(double* new_center_y);
 		void set_diameter(int new_diameter);
 		void set_keep_out(int new_keep_out);
 
