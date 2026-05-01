@@ -45,7 +45,7 @@ HANDLE h1;
 int speed = 0;
 
 // Need to include passthrough for keyboard checks?
-void mapper(TargetPositions centroid_array, int width, int height) {
+void mapper(TargetPositions& centroid_array, int width, int height) {
 
 	// Accept centroid array
 	// Create vehicle and obstacle objects
@@ -292,8 +292,9 @@ void mapper(TargetPositions centroid_array, int width, int height) {
 		// Turn towards current waypoint
 		direction_error = waypoint_direction - our_vehicle.get_orientation();
 		while ( abs(direction_error) > 0.1 ) {
+			std::cout << centroid_array.ic[1] << centroid_array.jc[1]<<centroid_array.ic[2] << centroid_array.jc[2];
 			if (direction_error < 0) {
-				serial_send("9", 1, h1);
+				//serial_send("9", 1, h1);
 				Sleep(100);
 
 			//	osWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -302,7 +303,7 @@ void mapper(TargetPositions centroid_array, int width, int height) {
 				std::cout << "Sent turn left command.\n\n";
 			}
 			else {
-				serial_send("10", 2, h1);
+				//serial_send("10", 2, h1);
 				Sleep(100);
 
 			//	osWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);

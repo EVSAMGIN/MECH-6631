@@ -11,6 +11,9 @@ using namespace std;
 #include "vision.h"
 #include "timer.h"
 #include "vision_custom.h"
+#include "world_map.h"
+#include "thread"
+
 
 #define KEY(c) ( GetAsyncKeyState((int)(c)) & (SHORT)0x8000 )
 
@@ -44,7 +47,7 @@ i2byte largest_label(image& label);
 
 const int IMAGE_WIDTH  = 640;
 const int IMAGE_HEIGHT = 480;
-int cam_number = 0;
+int cam_number = 1;
 
 // Radius in pixels for the sample circle within cursor
 // Tune this 
@@ -76,7 +79,7 @@ TargetPositions target_positions = {}; // Centroid Positions stored here!!!!!
 int main()
 {
 	activate_vision();
-	cam_number = 0;
+	cam_number = 1;
 	activate_camera(cam_number, IMAGE_HEIGHT, IMAGE_WIDTH);
 
 	cout << "\npress space to begin.";
@@ -88,14 +91,33 @@ int main()
 	activate(a, b, grey_gauss, rgb, rgb0, rgb1, mask, label);
 
 	find_objects(rgb0, a, b, grey_gauss, rgb, rgb1, mask, label, pm, ic_arr, jc_arr, ref_areas);
-	track_objects(rgb0, a, b, grey_gauss, rgb, rgb1, mask, label, pm, ic_arr, jc_arr, ref_areas, target_positions);
 
+	int i = 0;
+	while (1) {
+		
+
+		
+		track_objects(rgb0, a, b, grey_gauss, rgb, rgb1, mask, label, pm, ic_arr, jc_arr, ref_areas, target_positions);
+		if (i < 1) {
+			thread control_thread(mapper, target_positions, IMAGE_WIDTH, IMAGE_HEIGHT);
+			control_thread.detach();
+		}
+
+		
+		if (KEY('T')) {
+				cout << target_positions.ic[i] << " " << target_positions.jc[i] << "\n";
+				cout << target_positions.jc[i] << " " << target_positions.jc[i] << "\n";
+		}
+
+		if (KEY('X')) break;
+
+
+		cout << "\n\nloop.\n";
+
+		if(i<1) i++;
+			}
 	deactivate(a, b, grey_gauss, rgb, rgb0, rgb1, mask, label);
 	deactivate_vision();
-
-	cout << "\n\ndone.\n";
-	pause();
-	return 0;
 }
 
 int activate(image& a, image& b, image& grey_gauss, image& rgb, image& rgb0, image& rgb1, image mask[], image label[])
@@ -186,10 +208,10 @@ int select_object(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb
 		draw_point_rgb(rgb, 320, 240, 0, 255, 0);
 		view_rgb_image(rgb);
 
-		if (KEY(VK_UP))    j -= 3;
-		if (KEY(VK_DOWN))  j += 3;
-		if (KEY(VK_LEFT))  i -= 3;
-		if (KEY(VK_RIGHT)) i += 3;
+		if (KEY(VK_UP))    j -= 6;
+		if (KEY(VK_DOWN))  j += 6;
+		if (KEY(VK_LEFT))  i -= 6;
+		if (KEY(VK_RIGHT)) i += 6;
 		if (i < 0) i = 0; if (i > IMAGE_WIDTH  - 1) i = IMAGE_WIDTH  - 1;
 		if (j < 0) j = 0; if (j > IMAGE_HEIGHT - 1) j = IMAGE_HEIGHT - 1;
 
@@ -223,7 +245,7 @@ int track_objects(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb
 	cout << "\n\ntracking " << NTARGETS << " targets.";
 	cout << "\n  V=cycle view  1-6=place cursor for target  Enter=print centroids+timing  X=exit";
 
-	while (1) {
+	
 		double t0 = high_resolution_time();
 
 		acquire_image(rgb0, cam_number);
@@ -231,9 +253,9 @@ int track_objects(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb
 		last_elapsed = high_resolution_time() - t0;
 
 		for (int t = 0; t < NTARGETS; t++) {
-			int tol    = ref_areas[t] / 2;
-			i2byte nl  = search_object_circular(label[t], (int)ic[t], (int)jc[t], ref_areas[t] - tol, ref_areas[t] + tol);
-			valid[t]   = (nl != 0);
+			int tol = ref_areas[t] / 2;
+			i2byte nl = search_object_circular(label[t], (int)ic[t], (int)jc[t], ref_areas[t] - tol, ref_areas[t] + tol);
+			valid[t] = (nl != 0);
 			if (valid[t]) centroid(a, label[t], nl, ic[t], jc[t]);
 		}
 
@@ -245,12 +267,12 @@ int track_objects(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb
 		if (KEY('V')) {
 			viewMode = (viewMode + 1) % n_view_modes;
 			Sleep(200);
-			if      (viewMode == 0)        cout << "\nview: raw";
+			if (viewMode == 0)        cout << "\nview: raw";
 			else if (viewMode <= NTARGETS) cout << "\nview: mask " << TARGET_NAME[viewMode - 1];
 			else                           cout << "\nview: combined";
 		}
 
-		if      (viewMode == 0)        copy(rgb0, rgb);
+		if (viewMode == 0)        copy(rgb0, rgb);
 		else if (viewMode <= NTARGETS) copy(mask[viewMode - 1], rgb);
 		else                           copy(a, rgb);
 
@@ -266,11 +288,11 @@ int track_objects(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb
 			}
 		}
 		if (cursor_target >= 0) {
-			if (KEY(VK_UP))    { cursor_j -= 3; Sleep(50); }
-			if (KEY(VK_DOWN))  { cursor_j += 3; Sleep(50); }
-			if (KEY(VK_LEFT))  { cursor_i -= 3; Sleep(50); }
-			if (KEY(VK_RIGHT)) { cursor_i += 3; Sleep(50); }
-			if (cursor_i < 0) cursor_i = 0; if (cursor_i > IMAGE_WIDTH  - 1) cursor_i = IMAGE_WIDTH  - 1;
+			if (KEY(VK_UP)) { cursor_j -= 6; Sleep(50); }
+			if (KEY(VK_DOWN)) { cursor_j += 6; Sleep(50); }
+			if (KEY(VK_LEFT)) { cursor_i -= 6; Sleep(50); }
+			if (KEY(VK_RIGHT)) { cursor_i += 6; Sleep(50); }
+			if (cursor_i < 0) cursor_i = 0; if (cursor_i > IMAGE_WIDTH - 1) cursor_i = IMAGE_WIDTH - 1;
 			if (cursor_j < 0) cursor_j = 0; if (cursor_j > IMAGE_HEIGHT - 1) cursor_j = IMAGE_HEIGHT - 1;
 			draw_point_rgb(rgb, cursor_i, cursor_j,
 				MARKER_R[cursor_target], MARKER_G[cursor_target], MARKER_B[cursor_target]);
@@ -293,22 +315,26 @@ int track_objects(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb
 			Sleep(300);
 		}
 
-		if (KEY('X')) break;
+		//	if (KEY('X')) break;
+		//}
+
+		// save masks on exit
+		if (KEY('X')) {
+			save_rgb_image("rgb0.bmp", rgb0);
+			save_rgb_image("rgb1.bmp", rgb1);
+			for (int t = 0; t < NTARGETS; t++) {
+				char fname[32];
+				sprintf(fname, "mask_%s.bmp", TARGET_NAME[t]);
+				copy(mask[t], rgb);
+				save_rgb_image(fname, rgb);
+			}
+			copy(a, rgb); save_rgb_image("combined.bmp", rgb);
+		}
+
+		return 0;
 	}
 
-	// save masks on exit
-	save_rgb_image("rgb0.bmp", rgb0);
-	save_rgb_image("rgb1.bmp", rgb1);
-	for (int t = 0; t < NTARGETS; t++) {
-		char fname[32];
-		sprintf(fname, "mask_%s.bmp", TARGET_NAME[t]);
-		copy(mask[t], rgb);
-		save_rgb_image(fname, rgb);
-	}
-	copy(a, rgb); save_rgb_image("combined.bmp", rgb);
 
-	return 0;
-}
 
 //===TRACKING THREAD LVL2===
 i2byte search_object_circular(image& label_t, int is, int js, int min_area, int max_area)
