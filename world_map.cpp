@@ -55,69 +55,6 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 	
 	// Initial setup, only run once:
 
-	/*
-	// Serial Port setup
-
-	DCB dcb;
-	HANDLE hCom;
-	BOOL fSuccess;
-	TCHAR* pcCommPort = TEXT("COM1");
-
-	OVERLAPPED osWrite = { 0 };
-	DWORD dwWritten;
-	DWORD dwRes;
-	BOOL fRes;
-	*/
-
-	//std::cout << "Created serial port configuration variables\n\n";
-
-	//  Open a handle to the specified com port.
-
-	/*
-	hCom = CreateFile(pcCommPort,
-		GENERIC_READ | GENERIC_WRITE,
-		0,      //  must be opened with exclusive-access
-		NULL,   //  default security attributes
-		OPEN_EXISTING, //  must use OPEN_EXISTING
-		0,      //  not overlapped I/O
-		NULL); //  hTemplate must be NULL for comm devices
-
-	if (hCom == INVALID_HANDLE_VALUE)
-	{
-		//  Handle the error.
-		printf("CreateFile failed with error %d.\n", GetLastError());
-		//return (1);
-	}
-
-	//  Initialize the DCB structure.
-	SecureZeroMemory(&dcb, sizeof(DCB));
-	dcb.DCBlength = sizeof(DCB);
-
-	//  Build on the current configuration by first retrieving all current
-	//  settings.
-	fSuccess = GetCommState(hCom, &dcb);
-
-	if (!fSuccess)
-	{
-		//  Handle the error.
-		printf("GetCommState failed with error %d.\n", GetLastError());
-		//return (2);
-	}
-
-	dcb.BaudRate = CBR_57600;     //  baud rate
-	dcb.ByteSize = 8;             //  data size, xmit and rcv
-	dcb.Parity = NOPARITY;      //  parity bit
-	dcb.StopBits = ONESTOPBIT;    //  stop bit
-
-	fSuccess = SetCommState(hCom, &dcb);
-
-	if (!fSuccess)
-	{
-		//  Handle the error.
-		printf("SetCommState failed with error %d.\n", GetLastError());
-		//return (3);
-	}*/
-
 	// Open serial port
 	open_serial("COM5", h1, speed);
 
@@ -129,7 +66,7 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 	control_back_x = centroid_array.ic + GREEN_CENTROID_INDEX;
 	control_back_y = centroid_array.jc + GREEN_CENTROID_INDEX;
 
-	std::cout << "Something\n\n";
+	//std::cout << "Something\n\n";
 
 	vehicle our_vehicle(control_front_x, control_front_y, control_back_x, control_back_y, 9, 1);
 
@@ -306,9 +243,6 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 				//serial_send("10", 2, h1);
 				Sleep(100);
 
-			//	osWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-			//	WriteFile(hCom, serial_instruction, 2, &dwWritten, &osWrite);
-
 				std::cout << "Sent turn right command.\n\n";
 			}
 
@@ -370,34 +304,5 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 		if (waypoint_array[0] < 0) {
 			break;
 		}
-
-		// // If final waypoint (i.e. the target), and within range:
-		// // // Fire laser
-		// // If not final waypoint, and within tolerance:
-		// // // Remove waypoint
 	}
-
-	//direction_error = waypoint_direction - our_vehicle.get_orientation();
-
-	
-	
-
-	// Orient robot towards enemy if needed (center them along the robot orientation)
-	// Calculate path to enemy
-	// // Accept/Reject path: check for obstacle intersections
-	// // // Need to check each obstacle that exists
-	// // This checks if the obstacle is close enough to interfere with the robot moving in a straight line to the target
-
-/*	if (((centroid_array[BLUE_CENTROID_INDEX + 1] - our_vehicle.get_vehicle_center_y()) * obstacle_1.get_center_x() - (centroid_array[BLUE_CENTROID_INDEX] - our_vehicle.get_vehicle_center_x()) * obstacle_1.get_center_y() + centroid_array[BLUE_CENTROID_INDEX] * our_vehicle->get_vehicle_center_y() - centroid_array[BLUE_CENTROID_INDEX + 1] - our_vehicle->get_vehicle_center_x()) ^ 2 < ((centroid_array[BLUE_CENTROID_INDEX + 1] - our_vehicle->get_vehicle_center_y()) ^ 2 - (centroid_array[BLUE_CENTROID_INDEX] - our_vehicle->get_vehicle_center_x()) ^ 2) * (obstacle_1.obstacle_radius ^ 2) ^ 2) {
-		// Go to point on edge of keep-out zone
-		double obstacle_direction = atan2((obstacle_1.get_center_y() - our_vehicle.get_vehicle_center_y()), (obstacle_1.get_center_x() - our_vehicle.get_vehicle_center_x()));
-		if ( (waypoint_direction - obstacle_direction) < 0) {
-			// Find point along obstacle radius that is perpendicular to enemy_direction
-		}
-		else {
-			// Find other point along obstacle radius that is perpendicular to enemy_direction
-		}
-	} */
-
-	// Send commands to robot over Bluetooth
 };

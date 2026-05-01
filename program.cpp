@@ -99,7 +99,7 @@ int main()
 		
 		track_objects(rgb0, a, b, grey_gauss, rgb, rgb1, mask, label, pm, ic_arr, jc_arr, ref_areas, target_positions);
 		if (i < 1) {
-			thread control_thread(mapper, target_positions, IMAGE_WIDTH, IMAGE_HEIGHT);
+			thread control_thread(mapper, ref(target_positions), IMAGE_WIDTH, IMAGE_HEIGHT);
 			control_thread.detach();
 		}
 
