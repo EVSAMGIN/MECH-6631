@@ -112,7 +112,7 @@ int main()
 		if (KEY('X')) break;
 
 
-		cout << "\n\nloop.\n";
+		//cout << "\n\nloop.\n";
 
 		if(i<1) i++;
 			}

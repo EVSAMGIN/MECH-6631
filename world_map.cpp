@@ -14,6 +14,7 @@
 #include <tchar.h>
 #include <stdio.h>
 #include <iostream>
+#include "program.cpp"
 
 // Centroid index values for centroid array
 
@@ -211,8 +212,33 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 		enemy_vehicle.update_position_orientation();
 
 		// Debug prints
-		std::cout << "Current Waypoints:\n" << waypoint_array << "\n\n";
-		
+		//std::cout << "Current Waypoints:\n" << waypoint_array << "\n\n";
+	
+		if (KEY('Q')) {
+			serial_send("9", 1, h1);
+			Sleep(100);
+		}
+		else if (KEY('W')) {
+			serial_send("2", 1, h1);
+			Sleep(100);
+		}
+		else if (KEY('E')) {
+			serial_send("10", 2, h1);
+			Sleep(100);
+		}
+		else if (KEY('A')) {
+			serial_send("5", 1, h1);
+			Sleep(100);
+		}
+		else if (KEY('S')) {
+			serial_send("7", 1, h1);
+			Sleep(100);
+		}
+		else if (KEY('D')) {
+			serial_send("4", 1, h1);
+			Sleep(100);
+		}
+
 		// Check direct path for obstacles
 		// // Using formula from: https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
 		// // 
@@ -262,8 +288,11 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 		}
 
 		// Debug Prints
-		std::cout << "Current Direction Error: " << direction_error << "\n\n";
-		std::cout << "Current Position Error: " << position_error << "\n\n";
+		if (KEY(VK_RETURN)) {
+			std::cout << "Current Direction Error: " << direction_error << "\n\n";
+			std::cout << "Current Position Error: " << position_error << "\n\n";
+			std::cout << "Current Waypoints:\n" << waypoint_array << "\n\n";
+		}
 
 		// Turn towards current waypoint
 		if (abs(direction_error) > direction_threshold) {
@@ -271,13 +300,13 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 				//serial_send("9", 1, h1);
 				Sleep(100);
 
-				std::cout << "Sent turn left command.\n\n";
+				//std::cout << "Sent turn left command.\n\n";
 			}
 			else {
 				//serial_send("10", 2, h1);
 				Sleep(100);
 
-				std::cout << "Sent turn right command.\n\n";
+				//std::cout << "Sent turn right command.\n\n";
 			}
 		}
 		// Move towards current waypoint
@@ -285,7 +314,7 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 			if (waypoint_array[2] < 0) {
 				position_threshold = laser_threshold;
 
-				std::cout << "Reached laser stage.\n";
+				//std::cout << "Reached laser stage.\n";
 			}
 
 			if (abs(position_error) > position_threshold) {
@@ -293,7 +322,7 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 					//serial_send("2", 1, h1);
 					Sleep(100);
 
-					std::cout << "Sent forward command.\n\n";
+					//std::cout << "Sent forward command.\n\n";
 				}
 				else {
 					if (waypoint_array[2] > 0) {
@@ -306,13 +335,13 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 
 						remove_current_waypoint(waypoint_array);
 
-						std::cout << "Sent laser command.\n\n";
+						//std::cout << "Sent laser command.\n\n";
 					}
 					else {
 						//serial_send("2", 1, h1);
 						Sleep(100);
 
-						std::cout << "Sent forward command.\n\n";
+						//std::cout << "Sent forward command.\n\n";
 					}
 				}
 			}
