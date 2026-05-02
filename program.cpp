@@ -11,6 +11,7 @@ using namespace std;
 #include "vision.h"
 #include "timer.h"
 #include "vision_custom.h"
+//#include "serial_com.h"
 #include "world_map.h"
 #include "thread"
 
@@ -75,9 +76,15 @@ MaskParameters pm[NTARGETS] = {};
 
 TargetPositions target_positions = {}; // Centroid Positions stored here!!!!! 
 
+// Serial
+HANDLE h1;
+int speed = 0;
 
 int main()
 {
+	// Open serial port
+	open_serial("COM5", h1, speed);
+
 	activate_vision();
 	cam_number = 1;
 	activate_camera(cam_number, IMAGE_HEIGHT, IMAGE_WIDTH);
@@ -99,7 +106,7 @@ int main()
 		
 		track_objects(rgb0, a, b, grey_gauss, rgb, rgb1, mask, label, pm, ic_arr, jc_arr, ref_areas, target_positions);
 		if (i < 1) {
-			thread control_thread(mapper, ref(target_positions), IMAGE_WIDTH, IMAGE_HEIGHT);
+			thread control_thread(mapper, ref(target_positions), ref(h1), IMAGE_WIDTH, IMAGE_HEIGHT);
 			control_thread.detach();
 		}
 
@@ -109,7 +116,10 @@ int main()
 				cout << target_positions.jc[i] << " " << target_positions.jc[i] << "\n";
 		}
 
-		if (KEY('X')) break;
+		if (KEY('X')) {
+			close_serial(h1);
+			break;
+		}
 
 
 		//cout << "\n\nloop.\n";

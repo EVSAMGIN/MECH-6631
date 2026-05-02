@@ -4,7 +4,7 @@
 #include "obstacle.h"
 #include "vehicle.h"
 //#include "cost_map.h"
-#include "serial_com.h"
+//#include "serial_com.h"
 #include "vision_custom.h"
 
 // For Serial COM Port
@@ -42,8 +42,8 @@ obstacle obstacle_2(&default_centroid_position, &default_centroid_position, 5, 1
 obstacle obstacle_3(&default_centroid_position, &default_centroid_position, 5, 1);
 
 // Serial
-HANDLE h1;
-int speed = 0;
+//HANDLE h1;
+//int speed = 0;
 
 void initialize_waypoints(int* waypoints, int start_x_waypoint, int start_y_waypoint) {
 	int array_length = (int)(sizeof(waypoints) / sizeof(waypoints[0]));
@@ -80,7 +80,7 @@ void remove_current_waypoint(int* waypoints) {
 }
 
 // Need to include passthrough for keyboard checks?
-void mapper(TargetPositions& centroid_array, int width, int height) {
+void mapper(TargetPositions& centroid_array, HANDLE& h, int width, int height) {
 
 	// Accept centroid array
 	// Create vehicle and obstacle objects
@@ -91,7 +91,7 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 	// Initial setup, only run once:
 
 	// Open serial port
-	open_serial("COM5", h1, speed);
+	//open_serial("COM5", h1, speed);
 
 
 	//// Our robot
@@ -215,39 +215,39 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 		//std::cout << "Current Waypoints:\n" << waypoint_array << "\n\n";
 	
 		if (KEY('Q')) {
-			serial_send("9", 1, h1);
+			serial_send("9", 1, h);
 			Sleep(500);
-			serial_send("0", 1, h1);
+			serial_send("0", 1, h);
 			Sleep(100);
 		}
 		else if (KEY('W')) {
-			serial_send("2", 1, h1);
+			serial_send("2", 1, h);
 			Sleep(500);
-			serial_send("0", 1, h1);
+			serial_send("0", 1, h);
 			Sleep(100);
 		}
 		else if (KEY('E')) {
-			serial_send("10", 2, h1);
+			serial_send("10", 2, h);
 			Sleep(500);
-			serial_send("0", 1, h1);
+			serial_send("0", 1, h);
 			Sleep(100);
 		}
 		else if (KEY('A')) {
-			serial_send("5", 1, h1);
+			serial_send("5", 1, h);
 			Sleep(500);
-			serial_send("0", 1, h1);
+			serial_send("0", 1, h);
 			Sleep(100);
 		}
 		else if (KEY('S')) {
-			serial_send("7", 1, h1);
+			serial_send("7", 1, h);
 			Sleep(500);
-			serial_send("0", 1, h1);
+			serial_send("0", 1, h);
 			Sleep(100);
 		}
 		else if (KEY('D')) {
-			serial_send("4", 1, h1);
+			serial_send("4", 1, h);
 			Sleep(500);
-			serial_send("0", 1, h1);
+			serial_send("0", 1, h);
 			Sleep(100);
 		}
 
