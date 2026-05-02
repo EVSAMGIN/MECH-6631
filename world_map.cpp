@@ -314,6 +314,7 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 
 						std::cout << "Sent forward command.\n\n";
 					}
+				}
 			}
 		}
 
