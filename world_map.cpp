@@ -14,10 +14,10 @@
 #include <tchar.h>
 #include <stdio.h>
 #include <iostream>
-#include "program.cpp"
+
+#define KEY(c) ( GetAsyncKeyState((int)(c)) & (SHORT)0x8000 )
 
 // Centroid index values for centroid array
-
 static const int RED_CENTROID_INDEX        = 0;
 static const int GREEN_CENTROID_INDEX      = 1;
 static const int BLUE_CENTROID_INDEX       = 2;
