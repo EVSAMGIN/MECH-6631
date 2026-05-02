@@ -44,6 +44,16 @@ obstacle obstacle_3(&default_centroid_position, &default_centroid_position, 5, 1
 HANDLE h1;
 int speed = 0;
 
+void initialize_waypoints(int* waypoints, int start_x_waypoint, int start_y_waypoint) {
+	int array_length = (int)(sizeof(waypoints) / sizeof(waypoints[0]));
+	
+	waypoints[0] = start_x_waypoint;
+	waypoints[1] = start_y_waypoint;
+
+	for (int i = 2; i < (array_length - 1); i++) {
+		waypoints[i] = -10;
+	}
+}
 
 void add_new_waypoint(int* waypoints, int new_x_waypoint, int new_y_waypoint) {
 	int array_length = (int) (sizeof(waypoints) / sizeof(waypoints[0]));
@@ -171,6 +181,10 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 	}
 	
 	// Load target coordinates into buffer
+	//initialize_waypoints(waypoint_array, enemy_vehicle.get_vehicle_center_x(), enemy_vehicle.get_vehicle_center_y());
+	initialize_waypoints(waypoint_array, centroid_array.ic[OBSTACLE_1_CENTROID_INDEX], centroid_array.ic[OBSTACLE_1_CENTROID_INDEX]);
+
+	/*
 	waypoint_array[0] = enemy_vehicle.get_vehicle_center_x();
 	waypoint_array[1] = enemy_vehicle.get_vehicle_center_y();
 	waypoint_array[2] = -10;
@@ -185,6 +199,7 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 	waypoint_array[11] = -10;
 	waypoint_array[12] = -10;
 	waypoint_array[13] = -10;
+	*/
 	
 	waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[1]) - our_vehicle.get_vehicle_center_x());
 	//waypoint_direction = atan2((centroid_array[BLUE_CENTROID_INDEX + 1] - our_vehicle.get_vehicle_center_y()), (centroid_array[BLUE_CENTROID_INDEX] - our_vehicle.get_vehicle_center_x()));
@@ -194,6 +209,9 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 		// Update vehicles information
 		our_vehicle.update_position_orientation();
 		enemy_vehicle.update_position_orientation();
+
+		// Debug prints
+		std::cout << "Current Waypoints:\n" << waypoint_array << "\n\n";
 		
 		// Check direct path for obstacles
 		// // Using formula from: https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
@@ -258,6 +276,7 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 				std::cout << "Sent turn right command.\n\n";
 			}
 		}
+		// Move towards current waypoint
 		else {
 			if (waypoint_array[2] < 0) {
 				position_threshold = laser_threshold;
