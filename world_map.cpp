@@ -183,7 +183,7 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 	
 	// Load target coordinates into buffer
 	//initialize_waypoints(waypoint_array, enemy_vehicle.get_vehicle_center_x(), enemy_vehicle.get_vehicle_center_y());
-	initialize_waypoints(waypoint_array, centroid_array.ic[OBSTACLE_1_CENTROID_INDEX], centroid_array.ic[OBSTACLE_1_CENTROID_INDEX]);
+	initialize_waypoints(waypoint_array, centroid_array.ic[OBSTACLE_2_CENTROID_INDEX], centroid_array.ic[OBSTACLE_2_CENTROID_INDEX]);
 
 	/*
 	waypoint_array[0] = enemy_vehicle.get_vehicle_center_x();
@@ -303,7 +303,17 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 		if (KEY(VK_RETURN)) {
 			std::cout << "Current Direction Error: " << direction_error << "\n\n";
 			std::cout << "Current Position Error: " << position_error << "\n\n";
-			std::cout << "Current Waypoints:\n" << waypoint_array << "\n\n";
+			std::cout << "Current Waypoints:\n";
+			
+			int array_length = (int)(sizeof(waypoint_array) / sizeof(waypoint_array[0]));
+
+			for (int i = 0; i < (array_length - 2); i+2) {
+				std::cout << "x(" << (int) (i/2) << "): " << waypoint_array[i] << "\n";
+				std::cout << "y(" << (int) (i/2) << "): " << waypoint_array[i+1] << "\n";
+			}
+
+			std::cout << "\n";
+					
 		}
 
 		// Turn towards current waypoint
