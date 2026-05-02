@@ -29,7 +29,7 @@ int* waypoint_array = new int[14];
 int new_x, new_y, position_error, position_threshold = 2, laser_threshold = 10;
 
 double waypoint_direction, direction_error, obstacle_direction, obstacle_perpendicular;
-//char *serial_instruction = new char[5];
+double direction_threshold = 0.1;
 
 // Centroid pointers
 double *control_front_x, *control_front_y, *control_back_x, *control_back_y;
@@ -43,6 +43,30 @@ obstacle obstacle_3(&default_centroid_position, &default_centroid_position, 5, 1
 // Serial
 HANDLE h1;
 int speed = 0;
+
+
+void add_new_waypoint(int* waypoints, int new_x_waypoint, int new_y_waypoint) {
+	int array_length = (int) (sizeof(waypoints) / sizeof(waypoints[0]));
+
+	for (int i = array_length - 1; i > 2 ; i--) {
+		waypoints[i] = waypoints[i - 2];
+	}
+
+	waypoints[1] = new_y_waypoint;
+	waypoints[0] = new_x_waypoint;
+}
+
+
+void remove_current_waypoint(int* waypoints) {
+	int array_length = (int) (sizeof(waypoints) / sizeof(waypoints[0]));
+
+	for (int i = 0; i < (array_length - 2); i++) {
+		waypoints[i] = waypoints[i + 2];
+	}
+
+	waypoints[array_length - 2] = -10;
+	waypoints[array_length - 1] = -10;
+}
 
 // Need to include passthrough for keyboard checks?
 void mapper(TargetPositions& centroid_array, int width, int height) {
@@ -167,6 +191,10 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 
 	// while loop to iterate through waypoints
 	while (true) {
+		// Update vehicles information
+		our_vehicle.update_position_orientation();
+		enemy_vehicle.update_position_orientation();
+		
 		// Check direct path for obstacles
 		// // Using formula from: https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
 		// // 
@@ -179,38 +207,14 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 					obstacle_perpendicular = obstacle_direction + 3.14159/2;
 					new_x = (int) obstacle_1.obstacle_radius() * cos(obstacle_perpendicular);
 					new_y = (int) obstacle_1.obstacle_radius() * sin(obstacle_perpendicular);
-					waypoint_array[13] = waypoint_array[12];
-					waypoint_array[12] = waypoint_array[11];
-					waypoint_array[11] = waypoint_array[10];
-					waypoint_array[10] = waypoint_array[9];
-					waypoint_array[9]  = waypoint_array[8];
-					waypoint_array[8]  = waypoint_array[7];
-					waypoint_array[7]  = waypoint_array[6];
-					waypoint_array[6]  = waypoint_array[5];
-					waypoint_array[5]  = waypoint_array[4];
-					waypoint_array[4]  = waypoint_array[3];
-					waypoint_array[3]  = waypoint_array[2];
-					waypoint_array[2]  = waypoint_array[1];
-					waypoint_array[1]  = new_y;
-					waypoint_array[0]  = new_x;
+					
+					add_new_waypoint(waypoint_array, new_x, new_y);
 				} else {
 					obstacle_perpendicular = obstacle_direction - 3.14159 / 2;
 					new_x = (int)obstacle_1.obstacle_radius() * cos(obstacle_perpendicular);
 					new_y = (int)obstacle_1.obstacle_radius() * sin(obstacle_perpendicular);
-					waypoint_array[13] = waypoint_array[12];
-					waypoint_array[12] = waypoint_array[11];
-					waypoint_array[11] = waypoint_array[10];
-					waypoint_array[10] = waypoint_array[9];
-					waypoint_array[9] = waypoint_array[8];
-					waypoint_array[8] = waypoint_array[7];
-					waypoint_array[7] = waypoint_array[6];
-					waypoint_array[6] = waypoint_array[5];
-					waypoint_array[5] = waypoint_array[4];
-					waypoint_array[4] = waypoint_array[3];
-					waypoint_array[3] = waypoint_array[2];
-					waypoint_array[2] = waypoint_array[1];
-					waypoint_array[1] = new_y;
-					waypoint_array[0] = new_x;
+					
+					add_new_waypoint(waypoint_array, new_x, new_y);
 				}
 			}
 		}
@@ -226,8 +230,71 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 		// //		// Alter waypoint array
 		// //	}
 		// }
-		// Turn towards current waypoint
+
+
+		// Calculate position and orientation errors
 		direction_error = waypoint_direction - our_vehicle.get_orientation();
+
+		if (waypoint_array[0] > 0) {
+			position_error = (int)((waypoint_array[0] - our_vehicle.get_center_x()) ^ 2 + (waypoint_array[1] - our_vehicle.get_center_y()) ^ 2);
+		}
+		else {
+			position_error = 0;
+			break;
+		}
+
+		// Turn towards current waypoint
+		if (abs(direction_error) > direction_threshold) {
+			if (direction_error < 0) {
+				//serial_send("9", 1, h1);
+				Sleep(100);
+
+				std::cout << "Sent turn left command.\n\n";
+			}
+			else {
+				//serial_send("10", 2, h1);
+				Sleep(100);
+
+				std::cout << "Sent turn right command.\n\n";
+			}
+		}
+		else {
+			if (waypoint_array[2] < 0) {
+				position_threshold = laser_threshold;
+
+				std::cout << "Reached laser stage.\n";
+			}
+
+			if (abs(position_error) > position_threshold) {
+				if (waypoint_array[2] > 0) {
+					//serial_send("2", 1, h1);
+					Sleep(100);
+
+					std::cout << "Sent forward command.\n\n";
+				}
+				else {
+					if (waypoint_array[2] > 0) {
+						remove_current_waypoint(waypoint_array);
+					}
+
+					if (abs(position_error) < laser_threshold) {
+						//serial_send("13", 2, h1);
+						Sleep(100);
+
+						remove_current_waypoint(waypoint_array);
+
+						std::cout << "Sent laser command.\n\n";
+					}
+					else {
+						//serial_send("2", 1, h1);
+						Sleep(100);
+
+						std::cout << "Sent forward command.\n\n";
+					}
+			}
+		}
+
+		/*
 		while ( abs(direction_error) > 0.1 ) {
 			std::cout << centroid_array.ic[1] << centroid_array.jc[1]<<centroid_array.ic[2] << centroid_array.jc[2];
 			if (direction_error < 0) {
@@ -252,13 +319,14 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 
 			std::cout << "Updated vehicle position.\n\n";
 		}
+
+
 		// Move towards current waypoint
 		if (waypoint_array[0] > 0) {
 			position_error = (int) ((waypoint_array[0] - our_vehicle.get_center_x()) ^ 2 + (waypoint_array[1] - our_vehicle.get_center_y()) ^ 2);
 		}
 		else {
 			position_error = 0;
-			break;
 		}
 		//position_threshold = 2;
 
@@ -284,22 +352,10 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 			position_error = (int)((waypoint_array[0] - our_vehicle.get_center_x()) ^ 2 + (waypoint_array[1] - our_vehicle.get_center_y()) ^ 2);
 
 		}
+		*/
 
 		// Remove reached waypoint
-		waypoint_array[0]  = waypoint_array[2];
-		waypoint_array[1]  = waypoint_array[3];
-		waypoint_array[2]  = waypoint_array[4];
-		waypoint_array[3]  = waypoint_array[5];
-		waypoint_array[4]  = waypoint_array[6];
-		waypoint_array[5]  = waypoint_array[7];
-		waypoint_array[6]  = waypoint_array[8];
-		waypoint_array[7]  = waypoint_array[9];
-		waypoint_array[8]  = waypoint_array[10];
-		waypoint_array[9]  = waypoint_array[11];
-		waypoint_array[10] = waypoint_array[12];
-		waypoint_array[11] = waypoint_array[13];
-		waypoint_array[12] = -10;
-		waypoint_array[13] = -10;
+		//remove_current_waypoint(waypoint_array);
 		
 		if (waypoint_array[0] < 0) {
 			break;
