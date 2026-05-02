@@ -216,26 +216,38 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 	
 		if (KEY('Q')) {
 			serial_send("9", 1, h1);
+			Sleep(500);
+			serial_send("0", 1, h1);
 			Sleep(100);
 		}
 		else if (KEY('W')) {
 			serial_send("2", 1, h1);
+			Sleep(500);
+			serial_send("0", 1, h1);
 			Sleep(100);
 		}
 		else if (KEY('E')) {
 			serial_send("10", 2, h1);
+			Sleep(500);
+			serial_send("0", 1, h1);
 			Sleep(100);
 		}
 		else if (KEY('A')) {
 			serial_send("5", 1, h1);
+			Sleep(500);
+			serial_send("0", 1, h1);
 			Sleep(100);
 		}
 		else if (KEY('S')) {
 			serial_send("7", 1, h1);
+			Sleep(500);
+			serial_send("0", 1, h1);
 			Sleep(100);
 		}
 		else if (KEY('D')) {
 			serial_send("4", 1, h1);
+			Sleep(500);
+			serial_send("0", 1, h1);
 			Sleep(100);
 		}
 
