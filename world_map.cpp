@@ -261,6 +261,10 @@ void mapper(TargetPositions& centroid_array, int width, int height) {
 			break;
 		}
 
+		// Debug Prints
+		std::cout << "Current Direction Error: " << direction_error << "\n\n";
+		std::cout << "Current Position Error: " << position_error << "\n\n";
+
 		// Turn towards current waypoint
 		if (abs(direction_error) > direction_threshold) {
 			if (direction_error < 0) {
