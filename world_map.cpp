@@ -3,12 +3,8 @@
 #include "world_map.h"
 #include "obstacle.h"
 #include "vehicle.h"
-//#include "cost_map.h"
-//#include "serial_com.h"
 #include "vision_custom.h"
 
-// For Serial COM Port
-// From https://learn.microsoft.com/en-us/windows/win32/devio/configuring-a-communications-resource
 
 #include <windows.h>
 #include <tchar.h>
@@ -26,15 +22,11 @@ static const int OBSTACLE_1_CENTROID_INDEX = 4;
 static const int OBSTACLE_2_CENTROID_INDEX = 5;
 static const int OBSTACLE_3_CENTROID_INDEX = 6;
 
-//static const int array_size = 14;
-//
-//
-//int* waypoint_array = new int[array_size];
 
 int new_x, new_y, position_error, position_threshold = 2, laser_threshold = 10;
 
 double waypoint_direction, direction_error, obstacle_direction, obstacle_perpendicular;
-double direction_threshold = 0.3;
+double direction_threshold = 0.3; // radians
 int turn_flag=0;
 char wheelspeed [5] = "255\n";
 int backlash = 255;
@@ -44,16 +36,14 @@ double *control_front_x, *control_front_y, *control_back_x, *control_back_y;
 double   *enemy_front_x,   *enemy_front_y,   *enemy_back_x,   *enemy_back_y;
 double default_centroid_position = -10;
 
+double *target_x, *target_y;
+
 obstacle obstacle_1(&default_centroid_position, &default_centroid_position, 5, 1);
 obstacle obstacle_2(&default_centroid_position, &default_centroid_position, 5, 1);
 obstacle obstacle_3(&default_centroid_position, &default_centroid_position, 5, 1);
 
-// Serial
-//HANDLE h1;
-//int speed = 0;
 
 void initialize_waypoints(int* waypoints, int array_size, int start_x_waypoint, int start_y_waypoint) {
-	//int array_length = (int)(sizeof(waypoints) / sizeof(waypoints[0]));
 	
 	waypoints[0] = start_x_waypoint;
 	waypoints[1] = start_y_waypoint;
@@ -64,7 +54,6 @@ void initialize_waypoints(int* waypoints, int array_size, int start_x_waypoint, 
 }
 
 void add_new_waypoint(int* waypoints, int array_size, int new_x_waypoint, int new_y_waypoint) {
-	//int array_length = (int) (sizeof(waypoints) / sizeof(waypoints[0]));
 
 	for (int i = array_size - 1; i > 2 ; i--) {
 		waypoints[i] = waypoints[i - 2];
@@ -78,7 +67,6 @@ void add_new_waypoint(int* waypoints, int array_size, int new_x_waypoint, int ne
 
 
 void remove_current_waypoint(int* waypoints, int array_size) {
-	//int array_length = (int) (sizeof(waypoints) / sizeof(waypoints[0]));
 
 	for (int i = 0; i < (array_size - 2); i++) {
 		waypoints[i] = waypoints[i + 2];
@@ -88,7 +76,7 @@ void remove_current_waypoint(int* waypoints, int array_size) {
 	waypoints[array_size - 1] = -10;
 }
 
-// Need to include passthrough for keyboard checks?
+
 void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int array_size, int width, int height) {
 
 	// Accept centroid array
@@ -99,18 +87,12 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 	
 	// Initial setup, only run once:
 
-	// Open serial port
-	//open_serial("COM5", h1, speed);
-
-
 	//// Our robot
 
 	control_front_x = centroid_array.ic + RED_CENTROID_INDEX;
 	control_front_y = centroid_array.jc + RED_CENTROID_INDEX;
 	control_back_x = centroid_array.ic + GREEN_CENTROID_INDEX;
 	control_back_y = centroid_array.jc + GREEN_CENTROID_INDEX;
-
-	//std::cout << "Something\n\n";
 
 	vehicle our_vehicle(control_front_x, control_front_y, control_back_x, control_back_y, 9, 1);
 
@@ -141,23 +123,20 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 				//static obstacle obstacle_3(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_3_CENTROID_INDEX + 1, 4, 1);
 				obstacle_3.set_center_x(centroid_array.ic + OBSTACLE_3_CENTROID_INDEX);
 				obstacle_3.set_center_y(centroid_array.jc + OBSTACLE_3_CENTROID_INDEX);
+			}
+//			else {
 
-//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1, &obstacle_2, &obstacle_3);
-			}
-			else {
-//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1, &obstacle_2);
-			}
+//			}
 		}
 		else {
 			if ((centroid_array.ic[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array.jc[OBSTACLE_3_CENTROID_INDEX] > 0)) {
 				//static obstacle obstacle_3(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_3_CENTROID_INDEX + 1, 4, 1);
 				obstacle_3.set_center_x(centroid_array.ic + OBSTACLE_3_CENTROID_INDEX);
 				obstacle_3.set_center_y(centroid_array.jc + OBSTACLE_3_CENTROID_INDEX);
-
-//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1, &obstacle_3);
-			} else {
-//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_1);
 			}
+//			else {
+
+//			}
 		}
 	} else {
 		if ((centroid_array.ic[OBSTACLE_2_CENTROID_INDEX] > 0) && (centroid_array.jc[OBSTACLE_2_CENTROID_INDEX] > 0)) {
@@ -169,24 +148,22 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 				//static obstacle obstacle_3(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_3_CENTROID_INDEX + 1, 4, 1);
 				obstacle_3.set_center_x(centroid_array.ic + OBSTACLE_3_CENTROID_INDEX);
 				obstacle_3.set_center_y(centroid_array.jc + OBSTACLE_3_CENTROID_INDEX);
+			}
+//			else {
 
-//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_2, &obstacle_3);
-			}
-			else {
-//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_2);
-			}
+//			}
 		}
 		else {
+			/*
 			if ((centroid_array.ic[OBSTACLE_3_CENTROID_INDEX] > 0) && (centroid_array.jc[OBSTACLE_3_CENTROID_INDEX] > 0)) {
 				//static obstacle obstacle_3(centroid_array + OBSTACLE_2_CENTROID_INDEX, centroid_array + OBSTACLE_3_CENTROID_INDEX + 1, 4, 1);
 				obstacle_3.set_center_x(centroid_array.ic + OBSTACLE_3_CENTROID_INDEX);
 				obstacle_3.set_center_y(centroid_array.jc + OBSTACLE_3_CENTROID_INDEX);
-
-//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle, &obstacle_3);
 			}
-			else {
-//				static cost_map map(width, height, &our_vehicle, &enemy_vehicle);
-			}
+			*/
+//			else {
+//
+//			}
 		}
 	}
 	
@@ -194,22 +171,9 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 	//initialize_waypoints(waypoint_array, enemy_vehicle.get_vehicle_center_x(), enemy_vehicle.get_vehicle_center_y());
 	initialize_waypoints(waypoint_array, array_size, centroid_array.ic[OBSTACLE_2_CENTROID_INDEX], centroid_array.jc[OBSTACLE_2_CENTROID_INDEX]);
 
-	/*
-	waypoint_array[0] = enemy_vehicle.get_vehicle_center_x();
-	waypoint_array[1] = enemy_vehicle.get_vehicle_center_y();
-	waypoint_array[2] = -10;
-	waypoint_array[3] = -10;
-	waypoint_array[4] = -10;
-	waypoint_array[5] = -10;
-	waypoint_array[6] = -10;
-	waypoint_array[7] = -10;
-	waypoint_array[8] = -10;
-	waypoint_array[9] = -10;
-	waypoint_array[10] = -10;
-	waypoint_array[11] = -10;
-	waypoint_array[12] = -10;
-	waypoint_array[13] = -10;
-	*/
+	// Define target pointer
+	target_x = centroid_array.ic + OBSTACLE_2_CENTROID_INDEX;
+	target_y = centroid_array.jc + OBSTACLE_2_CENTROID_INDEX;
 	
 	waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
 	//waypoint_direction = atan2((centroid_array[BLUE_CENTROID_INDEX + 1] - our_vehicle.get_vehicle_center_y()), (centroid_array[BLUE_CENTROID_INDEX] - our_vehicle.get_vehicle_center_x()));
@@ -323,14 +287,24 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 		// //	}
 		// }
 
+		if (waypoint_array[0] > 0) {
+			// If there are active waypoints, navigate to them
+			waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
+			position_error = (int)((waypoint_array[0] - our_vehicle.get_center_x()) ^ 2 + (waypoint_array[1] - our_vehicle.get_center_y()) ^ 2);
+		}
+		else {
+			// Otherwise, track the moving target
+			waypoint_direction = atan2((*target_y - our_vehicle.get_vehicle_center_y()), (*target_x) - our_vehicle.get_vehicle_center_x());
+			position_error = (int) ( (*target_x - our_vehicle.get_center_x() ) ^ 2 + (*target_y - our_vehicle.get_center_y()) ^ 2);
+		}
 
-		waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
+		//waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
 
 		// Calculate position and orientation errors
 		direction_error = waypoint_direction - our_vehicle.get_orientation();
 
 
-
+		/*
 		if (waypoint_array[0] > 0) {
 		//	std::cout << "Entering error calcs";
 			position_error = (int)((waypoint_array[0] - our_vehicle.get_center_x()) ^ 2 + (waypoint_array[1] - our_vehicle.get_center_y()) ^ 2);
@@ -340,6 +314,7 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 			position_error = 0;
 			break;
 		}
+		*/
 
 		// Debug Prints
 		if (KEY(VK_RETURN)) {
