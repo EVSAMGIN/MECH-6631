@@ -23,13 +23,13 @@ static const int OBSTACLE_2_CENTROID_INDEX = 5;
 static const int OBSTACLE_3_CENTROID_INDEX = 6;
 
 
-int new_x, new_y, position_error, position_threshold = 2, laser_threshold = 10;
+int new_x, new_y, position_error, position_threshold = 60^2, laser_threshold = 60^2;
 
 double waypoint_direction, direction_error, obstacle_direction, obstacle_perpendicular;
 double direction_threshold = 0.3; // radians
-int turn_flag=0;
-char wheelspeed [5] = "255\n";
-int backlash = 255;
+int turn_flag=0,vertical_flag=0;
+char wheelspeed [5] = "100\n";
+int backlash = 100;
 
 // Centroid pointers
 double *control_front_x, *control_front_y, *control_back_x, *control_back_y;
@@ -169,7 +169,10 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 	
 	// Load target coordinates into buffer
 	//initialize_waypoints(waypoint_array, enemy_vehicle.get_vehicle_center_x(), enemy_vehicle.get_vehicle_center_y());
-	initialize_waypoints(waypoint_array, array_size, centroid_array.ic[OBSTACLE_2_CENTROID_INDEX], centroid_array.jc[OBSTACLE_2_CENTROID_INDEX]);
+	//initialize_waypoints(waypoint_array, array_size, centroid_array.ic[OBSTACLE_2_CENTROID_INDEX], centroid_array.jc[OBSTACLE_2_CENTROID_INDEX]);
+	initialize_waypoints(waypoint_array, array_size, 500, 100);
+
+
 
 	// Define target pointer
 	target_x = centroid_array.ic + OBSTACLE_2_CENTROID_INDEX;
@@ -186,7 +189,7 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 		
 		// Update vehicles information
 
-		initialize_waypoints(waypoint_array, array_size, centroid_array.ic[OBSTACLE_2_CENTROID_INDEX], centroid_array.jc[OBSTACLE_2_CENTROID_INDEX]);
+		//initialize_waypoints(waypoint_array, array_size, centroid_array.ic[OBSTACLE_2_CENTROID_INDEX], centroid_array.jc[OBSTACLE_2_CENTROID_INDEX]);
 
 		our_vehicle.update_position_orientation();
 		enemy_vehicle.update_position_orientation();
@@ -290,12 +293,12 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 		if (waypoint_array[0] > 0) {
 			// If there are active waypoints, navigate to them
 			waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
-			position_error = (int)((waypoint_array[0] - our_vehicle.get_center_x()) ^ 2 + (waypoint_array[1] - our_vehicle.get_center_y()) ^ 2);
+			position_error = (int)((waypoint_array[0] - our_vehicle.get_vehicle_center_x()) * (waypoint_array[0] - our_vehicle.get_vehicle_center_x()) + (waypoint_array[1] - our_vehicle.get_vehicle_center_y()) * (waypoint_array[1] - our_vehicle.get_vehicle_center_y()));
 		}
 		else {
 			// Otherwise, track the moving target
 			waypoint_direction = atan2((*target_y - our_vehicle.get_vehicle_center_y()), (*target_x) - our_vehicle.get_vehicle_center_x());
-			position_error = (int) ( (*target_x - our_vehicle.get_center_x() ) ^ 2 + (*target_y - our_vehicle.get_center_y()) ^ 2);
+			position_error = (int)(((*target_x - our_vehicle.get_vehicle_center_x()) * (*target_x - our_vehicle.get_vehicle_center_x()) + (*target_y - our_vehicle.get_vehicle_center_y()) * (*target_y - our_vehicle.get_vehicle_center_y())));
 		}
 
 		//waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
@@ -322,9 +325,6 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 			std::cout << "Current Position Error: " << position_error << "\n\n";
 			std::cout << "Current Waypoints:\n";
 			
-			
-
-			//int array_length = (int)(sizeof(waypoint_array) / sizeof(waypoint_array[0]));
 
 			std::cout << "Array length:" << array_size << "\n\n";
 
@@ -345,6 +345,7 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 				//Sleep(50);
 
 				turn_flag = 1;
+				vertical_flag = 0;
 				std::cout << "GO LEFT BROTHER.\n";
 			}
 			else if (direction_error < 0 && turn_flag > -1) {		
@@ -352,15 +353,57 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 				//Sleep(50);
 
 				turn_flag = -1;
+				vertical_flag = 0;
 				std::cout << "GO RIGHT BROTHER.\n";
 			}
 		}
 		// Move towards current waypoint
 		else {
 
+			if (turn_flag == 1) {
+				serial_send("10\n", 3, h);
+				Sleep(backlash);
+				//turn_flag = 0;
+			}
+			else if (turn_flag == -1) {
+				serial_send("9\n", 2, h);
+				Sleep(backlash);
+				//turn_flag = 0;
+			}
+
+
+			if ((abs(position_error) > position_threshold) && vertical_flag < 1) {
+
+				serial_send("2\n", 2, h);
+				
+				turn_flag = 0;
+				vertical_flag = 1;
+
+
+				std::cout << position_error<<"\nFULL STEAM AHEAD!\n";
+
+			}
+			else if ((abs(position_error) <= position_threshold)) { //}&& vertical_flag == 1) {
+				
+				if (waypoint_array[0] > 0) {
+					remove_current_waypoint(waypoint_array, array_size);
+					vertical_flag = 0;
+					std::cout << "TARGET REACHED.\n";
+
+					position_threshold = laser_threshold;
+				}
+				else {
+					serial_send("13\n", 3, h);
+					std::cout << "TARGET ELIMINATED!\n\n";
+					break;
+				}
+			}
+		}
+	}
+
 			//serial_send("0\n", 2, h);
 			//Sleep(50);
-
+		/*
 			if (turn_flag == 1) {
 				serial_send("10\n", 3, h);
 				Sleep(backlash);
@@ -375,19 +418,20 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 				serial_send("13\n", 3, h);
 				Sleep(50);
 			}
-		
+		*/
 			
 			//std::cout << "MAJOR LAZER!!!\n";
 			//serial_send("13\n", 3, h);
 			
 			//Sleep(50);
-			if (waypoint_array[2] < 0) {
+		/*
+		if (waypoint_array[2] < 0) {
 				position_threshold = laser_threshold;
 
 				//std::cout << "Reached laser stage.\n";
 			}
-
-			break;
+		*/
+			
 
 			/*
 			if (abs(position_error) > position_threshold) {
@@ -419,7 +463,7 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 				}
 			}
 			*/
-		}
+		
 
 		
 
@@ -486,9 +530,12 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 		// Remove reached waypoint
 		//remove_current_waypoint(waypoint_array);
 		
+	/*
 		if (waypoint_array[0] < 0) {
 			std::cout << "Exiting Nav 2";
 			break;
 		}
 	}
-};
+	*/
+
+}

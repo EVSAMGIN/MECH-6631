@@ -302,7 +302,7 @@ int track_objects(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb
 			//waypoint markers
 
 			
-			draw_point_rgb(rgb, 320, 240, 0, 255, 0);
+			//draw_point_rgb(rgb, 320, 240, 0, 255, 0);
 
 		}
 
