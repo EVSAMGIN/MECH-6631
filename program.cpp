@@ -80,10 +80,16 @@ TargetPositions target_positions = {}; // Centroid Positions stored here!!!!!
 HANDLE h1;
 int speed = 0;
 
+
+// Waypoints
+static const int waypoint_array_size = 14;
+
+int* waypoints = new int[waypoint_array_size];
+
 int main()
 {
 	// Open serial port
-	open_serial("COM5", h1, speed);
+	open_serial("COM7", h1, speed);
 
 	activate_vision();
 	cam_number = 1;
@@ -106,9 +112,10 @@ int main()
 		
 		track_objects(rgb0, a, b, grey_gauss, rgb, rgb1, mask, label, pm, ic_arr, jc_arr, ref_areas, target_positions);
 		if (i < 1) {
-			thread control_thread(mapper, ref(target_positions), ref(h1), IMAGE_WIDTH, IMAGE_HEIGHT);
+			thread control_thread(mapper, ref(target_positions), ref(h1), waypoints, waypoint_array_size, IMAGE_WIDTH, IMAGE_HEIGHT);
 			control_thread.detach();
 		}
+
 
 		
 		if (KEY('T')) {
@@ -215,7 +222,7 @@ int select_object(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb
 		else                               copy(a, rgb);
 
 		draw_point_rgb(rgb, i, j, MARKER_R[target_index], MARKER_G[target_index], MARKER_B[target_index]);
-		draw_point_rgb(rgb, 320, 240, 0, 255, 0);
+		//draw_point_rgb(rgb, 320, 240, 0, 255, 0);
 		view_rgb_image(rgb);
 
 		if (KEY(VK_UP))    j -= 6;
@@ -252,9 +259,12 @@ int track_objects(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb
 
 	int n_view_modes = NTARGETS + 2;
 
+	/*
+
 	cout << "\n\ntracking " << NTARGETS << " targets.";
 	cout << "\n  V=cycle view  1-6=place cursor for target  Enter=print centroids+timing  X=exit";
-
+	
+	*/
 	
 		double t0 = high_resolution_time();
 
@@ -286,9 +296,24 @@ int track_objects(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb
 		else if (viewMode <= NTARGETS) copy(mask[viewMode - 1], rgb);
 		else                           copy(a, rgb);
 
-		for (int t = 0; t < NTARGETS; t++)
+		for (int t = 0; t < NTARGETS; t++) {
+
 			draw_point_rgb(rgb, (int)ic[t], (int)jc[t], MARKER_R[t], MARKER_G[t], MARKER_B[t]);
-		draw_point_rgb(rgb, 320, 240, 0, 255, 0);
+			//waypoint markers
+
+			
+			draw_point_rgb(rgb, 320, 240, 0, 255, 0);
+
+		}
+
+		for (int q = 0; q < ((NTARGETS * 2)-2); q += 2) {
+			if (waypoints[q]> 0 && waypoints[q+1]> 0) {
+				draw_point_rgb(rgb, (int)waypoints[q], (int)waypoints[q+1], 0, 255, 0);
+			}
+		}
+
+	
+
 
 		// cursor placement: keys 1-6 snap cursor to that target
 		for (int t = 0; t < NTARGETS; t++) {
@@ -314,6 +339,8 @@ int track_objects(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb
 				cout << "\ncursor confirmed";
 			}
 		}
+
+
 
 		view_rgb_image(rgb);
 

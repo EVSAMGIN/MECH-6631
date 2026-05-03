@@ -244,10 +244,10 @@ void sample_mask_at_cursor(image& rgb, int ic, int jc, int sample_r, MaskParamet
 	const double MIN_GREY_SPREAD = 15.0;
 	const double MIN_VAL_SPREAD  = 20.0;
 	const double MIN_SAT_SPREAD  = 0.10;
-	double hue_spread  = std_hue  * 2.0; if (hue_spread  < MIN_HUE_SPREAD)  hue_spread  = MIN_HUE_SPREAD;
-	double grey_spread = std_grey * 2.0; if (grey_spread < MIN_GREY_SPREAD) grey_spread = MIN_GREY_SPREAD;
-	double val_spread  = std_val  * 2.0; if (val_spread  < MIN_VAL_SPREAD)  val_spread  = MIN_VAL_SPREAD;
-	double sat_spread  = std_sat  * 2.0; if (sat_spread  < MIN_SAT_SPREAD)  sat_spread  = MIN_SAT_SPREAD;
+	double hue_spread  = std_hue  * 1.0; if (hue_spread  < MIN_HUE_SPREAD)  hue_spread  = MIN_HUE_SPREAD;
+	double grey_spread = std_grey * 1.0; if (grey_spread < MIN_GREY_SPREAD) grey_spread = MIN_GREY_SPREAD;
+	double val_spread  = std_val  * 1.0; if (val_spread  < MIN_VAL_SPREAD)  val_spread  = MIN_VAL_SPREAD;
+	double sat_spread  = std_sat  * 1.0; if (sat_spread  < MIN_SAT_SPREAD)  sat_spread  = MIN_SAT_SPREAD;
 
 	double hlow  = mean_hue  - hue_spread;
 	double hhigh = mean_hue  + hue_spread;
