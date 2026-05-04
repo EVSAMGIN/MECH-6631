@@ -47,7 +47,7 @@ int label_area(image& label, i2byte nlabel);
 i2byte largest_label(image& label);
 
 const int IMAGE_WIDTH  = 640;
-const int IMAGE_HEIGHT = 480;
+const int IMAGE_HEIGHT = 360;
 int cam_number = 1;
 
 // Radius in pixels for the sample circle within cursor
@@ -89,7 +89,7 @@ int* waypoints = new int[waypoint_array_size];
 int main()
 {
 	// Open serial port
-	open_serial("COM7", h1, speed);
+	open_serial("COM5", h1, speed);
 
 	activate_vision();
 	cam_number = 1;
@@ -225,8 +225,8 @@ int select_object(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb
 		//draw_point_rgb(rgb, 320, 240, 0, 255, 0);
 		view_rgb_image(rgb);
 
-		if (KEY(VK_UP))    j -= 6;
-		if (KEY(VK_DOWN))  j += 6;
+		if (KEY(VK_UP))    j += 6;
+		if (KEY(VK_DOWN))  j -= 6;
 		if (KEY(VK_LEFT))  i -= 6;
 		if (KEY(VK_RIGHT)) i += 6;
 		if (i < 0) i = 0; if (i > IMAGE_WIDTH  - 1) i = IMAGE_WIDTH  - 1;

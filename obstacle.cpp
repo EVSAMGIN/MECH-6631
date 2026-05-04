@@ -18,12 +18,20 @@ obstacle::obstacle(double *centroid_x, double *centroid_y, int obstacle_diameter
 
 // Getters
 
-int obstacle::get_center_x() {
+double obstacle::get_center_x() {
 	return *obstacle_centroid_x;
 }
 
-int obstacle::get_center_y() {
+double* obstacle::get_center_pointer_x() {
+	return obstacle_centroid_x;
+}
+
+double obstacle::get_center_y() {
 	return *obstacle_centroid_y;
+}
+
+double* obstacle::get_center_pointer_y() {
+	return obstacle_centroid_y;
 }
 
 int obstacle::get_diameter() {
@@ -36,6 +44,10 @@ int obstacle::get_keep_out() {
 
 int obstacle::obstacle_radius() {
 	return diameter / 2 + keep_out;
+}
+
+double obstacle::get_radius() {
+	return diameter / 2.0;
 }
 
 // Setters

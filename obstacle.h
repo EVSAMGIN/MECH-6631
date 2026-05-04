@@ -18,11 +18,14 @@ class obstacle
 
 		// Getters
 
-		int get_center_x();
-		int get_center_y();
+		double get_center_x();
+		double* get_center_pointer_x();
+		double get_center_y();
+		double* get_center_pointer_y();
 		int get_diameter();
 		int get_keep_out();
 		int obstacle_radius();
+		double get_radius();
 
 		// Setters
 
