@@ -28,7 +28,7 @@ int new_x, new_y, position_error; //, position_threshold = 60^2, laser_threshold
 double waypoint_direction, direction_error, obstacle_direction, obstacle_perpendicular, position_threshold = pow(30, 2), obstacle_threshold = pow(30, 2), laser_threshold = pow(150, 2);
 double direction_threshold = 0.3; // radians
 double fire_direction_threshold = 0.1; // tighter threshold for firing (~3 degrees)
-int turn_flag = 0, vertical_flag = 0, slow_flag = 0, obstacle_1_flag = 0, fine_align_flag = 0;
+int turn_flag = 0, vertical_flag = 0, slow_flag = 0, obstacle_1_flag = 0, obstacle_2_flag = 0, obstacle_3_flag = 0, fine_align_flag = 0;
 
 char drive_speed_string[5] = "100\n";
 char slow_drive_speed_string[5] = "100\n";
@@ -217,9 +217,6 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 				double dist_calc_2 = sqrt((pow(waypoint_array[1] - our_vehicle.get_vehicle_center_y(), 2) + pow(waypoint_array[0] - our_vehicle.get_vehicle_center_x(), 2)));// *obstacle_1.obstacle_radius();
 				double distance = abs(dist_calc_1) / abs(dist_calc_2);
 
-				//double dist_calc_1 = pow((waypoint_array[1] - our_vehicle.get_vehicle_center_y()) * obstacle_1.get_center_x() - (waypoint_array[0] - our_vehicle.get_vehicle_center_x()) * obstacle_1.get_center_y() + waypoint_array[0] * our_vehicle.get_vehicle_center_y() - waypoint_array[1] * our_vehicle.get_vehicle_center_x(), 2);
-				//double dist_calc_2 = (pow(waypoint_array[1] - our_vehicle.get_vehicle_center_y(), 2) + pow(waypoint_array[0] - our_vehicle.get_vehicle_center_x(), 2)) * obstacle_1.obstacle_radius() * obstacle_1.get_radius();
-
 				//std::cout << "WAY_DIST_CALC_1: " << dist_calc_1 << "\n";
 				//std::cout << "WAY_DIST_CALC_2: " << dist_calc_2 << "\n";
 				if (distance < obstacle_1.obstacle_radius()) {
@@ -315,6 +312,215 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 			}
 		}
 
+		if ((obstacle_2.get_center_x() >= 0) && (obstacle_2_flag == 0)) {
+			//std::cout << "CHECKING FOR OBSTACLE 2.";
+
+			// IF WAYPOINTS ALREADY EXIST, USE NEXT WAYPOINT POSITION
+			if (waypoint_array[0] >= 0) {
+				double dist_calc_1 = abs((waypoint_array[1] - our_vehicle.get_vehicle_center_y()) * obstacle_2.get_center_x() - (waypoint_array[0] - our_vehicle.get_vehicle_center_x()) * obstacle_2.get_center_y() + waypoint_array[0] * our_vehicle.get_vehicle_center_y() - waypoint_array[1] * our_vehicle.get_vehicle_center_x());
+				double dist_calc_2 = sqrt((pow(waypoint_array[1] - our_vehicle.get_vehicle_center_y(), 2) + pow(waypoint_array[0] - our_vehicle.get_vehicle_center_x(), 2)));// *obstacle_2.obstacle_radius();
+				double distance = abs(dist_calc_1) / abs(dist_calc_2);
+
+				//std::cout << "WAY_DIST_CALC_1: " << dist_calc_1 << "\n";
+				//std::cout << "WAY_DIST_CALC_2: " << dist_calc_2 << "\n";
+				if (distance < obstacle_2.obstacle_radius()) {
+					// Path intersects with keep-out zone, need to find new waypoint
+					obstacle_direction = atan2((obstacle_2.get_center_y() - our_vehicle.get_vehicle_center_y()), (obstacle_2.get_center_x()) - our_vehicle.get_vehicle_center_x());
+					if (waypoint_direction > obstacle_direction) {
+						std::cout << "Obstacle 2 waypoint greater than\n";
+
+						std::cout << "Current Vehicle Position: " << our_vehicle.get_center_x() << ", " << our_vehicle.get_center_y() << ")\n";
+
+						obstacle_perpendicular = obstacle_direction + 3.14159 / 2;
+						new_x = (int)(obstacle_2.obstacle_radius() * cos(obstacle_perpendicular)) + obstacle_2.get_center_x();
+						new_y = (int)(obstacle_2.obstacle_radius() * sin(obstacle_perpendicular)) + obstacle_2.get_center_y();
+
+						add_new_waypoint(waypoint_array, array_size, new_x, new_y);
+
+						obstacle_2_flag = 1;
+
+						waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
+						position_error = ((waypoint_array[0] - our_vehicle.get_vehicle_center_x()) * (waypoint_array[0] - our_vehicle.get_vehicle_center_x()) + (waypoint_array[1] - our_vehicle.get_vehicle_center_y()) * (waypoint_array[1] - our_vehicle.get_vehicle_center_y()));
+
+						position_threshold = obstacle_threshold;
+					}
+					else {
+						std::cout << "Obstacle 2 waypoint less than\n";
+
+						std::cout << "Current Vehicle Position: " << our_vehicle.get_center_x() << ", " << our_vehicle.get_center_y() << ")\n";
+
+						obstacle_perpendicular = obstacle_direction - 3.14159 / 2;
+						new_x = (int)(obstacle_2.obstacle_radius() * cos(obstacle_perpendicular)) + obstacle_2.get_center_x();
+						new_y = (int)(obstacle_2.obstacle_radius() * sin(obstacle_perpendicular)) + obstacle_2.get_center_y();
+
+						add_new_waypoint(waypoint_array, array_size, new_x, new_y);
+
+						obstacle_2_flag = 1;
+
+						waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
+						position_error = ((waypoint_array[0] - our_vehicle.get_vehicle_center_x()) * (waypoint_array[0] - our_vehicle.get_vehicle_center_x()) + (waypoint_array[1] - our_vehicle.get_vehicle_center_y()) * (waypoint_array[1] - our_vehicle.get_vehicle_center_y()));
+
+						position_threshold = obstacle_threshold;
+					}
+				}
+			}
+			// IF THERE ARE NO EXISTING WAYPOINTS, USE TARGET LOCATION
+			else {
+				double dist_calc_1 = abs((*target_y - our_vehicle.get_vehicle_center_y()) * obstacle_2.get_center_x() - (*target_x - our_vehicle.get_vehicle_center_x()) * obstacle_2.get_center_y() + *target_x * our_vehicle.get_vehicle_center_y() - *target_y * our_vehicle.get_vehicle_center_x());
+				double dist_calc_2 = sqrt((pow(*target_y - our_vehicle.get_vehicle_center_y(), 2) + pow(*target_x - our_vehicle.get_vehicle_center_x(), 2)));// *obstacle_1.obstacle_radius();
+				double distance = abs(dist_calc_1) / abs(dist_calc_2);
+
+				//std::cout << "TAR_DIST_CALC_1: " << dist_calc_1 << "\n";
+				//std::cout << "TAR_DIST_CALC_2: " << dist_calc_2 << "\n";
+
+				if (distance < obstacle_1.obstacle_radius()) {
+					// Path intersects with keep-out zone, need to find new waypoint
+					obstacle_direction = atan2((obstacle_2.get_center_y() - our_vehicle.get_vehicle_center_y()), (obstacle_2.get_center_x()) - our_vehicle.get_vehicle_center_x());
+					if (waypoint_direction > obstacle_direction) {
+						std::cout << "Obstacle 2 waypoint greater than\n";
+
+						std::cout << "Current Vehicle Position: " << our_vehicle.get_center_x() << ", " << our_vehicle.get_center_y() << ")\n";
+
+						obstacle_perpendicular = obstacle_direction + 3.14159 / 2;
+						new_x = (int)(obstacle_2.obstacle_radius() * cos(obstacle_perpendicular)) + obstacle_2.get_center_x();
+						new_y = (int)(obstacle_2.obstacle_radius() * sin(obstacle_perpendicular)) + obstacle_2.get_center_y();
+
+						add_new_waypoint(waypoint_array, array_size, new_x, new_y);
+
+						obstacle_2_flag = 1;
+
+						waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
+						position_error = ((waypoint_array[0] - our_vehicle.get_vehicle_center_x()) * (waypoint_array[0] - our_vehicle.get_vehicle_center_x()) + (waypoint_array[1] - our_vehicle.get_vehicle_center_y()) * (waypoint_array[1] - our_vehicle.get_vehicle_center_y()));
+
+						position_threshold = obstacle_threshold;
+					}
+					else {
+						std::cout << "Obstacle 2 waypoint less than\n";
+
+						std::cout << "Current Vehicle Position: " << our_vehicle.get_center_x() << ", " << our_vehicle.get_center_y() << ")\n";
+
+						obstacle_perpendicular = obstacle_direction - 3.14159 / 2;
+						new_x = (int)(obstacle_2.obstacle_radius() * cos(obstacle_perpendicular)) + obstacle_2.get_center_x();
+						new_y = (int)(obstacle_2.obstacle_radius() * sin(obstacle_perpendicular)) + obstacle_2.get_center_y();
+
+						add_new_waypoint(waypoint_array, array_size, new_x, new_y);
+
+						obstacle_2_flag = 1;
+
+						waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
+						position_error = ((waypoint_array[0] - our_vehicle.get_vehicle_center_x()) * (waypoint_array[0] - our_vehicle.get_vehicle_center_x()) + (waypoint_array[1] - our_vehicle.get_vehicle_center_y()) * (waypoint_array[1] - our_vehicle.get_vehicle_center_y()));
+
+						position_threshold = obstacle_threshold;
+					}
+				}
+			}
+		}
+
+		if ((obstacle_3.get_center_x() >= 0) && (obstacle_3_flag == 0)) {
+			//std::cout << "CHECKING FOR OBSTACLE 3.";
+
+			// IF WAYPOINTS ALREADY EXIST, USE NEXT WAYPOINT POSITION
+			if (waypoint_array[0] >= 0) {
+				double dist_calc_1 = abs((waypoint_array[1] - our_vehicle.get_vehicle_center_y()) * obstacle_3.get_center_x() - (waypoint_array[0] - our_vehicle.get_vehicle_center_x()) * obstacle_3.get_center_y() + waypoint_array[0] * our_vehicle.get_vehicle_center_y() - waypoint_array[1] * our_vehicle.get_vehicle_center_x());
+				double dist_calc_2 = sqrt((pow(waypoint_array[1] - our_vehicle.get_vehicle_center_y(), 2) + pow(waypoint_array[0] - our_vehicle.get_vehicle_center_x(), 2)));// *obstacle_3.obstacle_radius();
+				double distance = abs(dist_calc_1) / abs(dist_calc_2);
+
+				//std::cout << "WAY_DIST_CALC_1: " << dist_calc_1 << "\n";
+				//std::cout << "WAY_DIST_CALC_2: " << dist_calc_2 << "\n";
+				if (distance < obstacle_3.obstacle_radius()) {
+					// Path intersects with keep-out zone, need to find new waypoint
+					obstacle_direction = atan2((obstacle_3.get_center_y() - our_vehicle.get_vehicle_center_y()), (obstacle_3.get_center_x()) - our_vehicle.get_vehicle_center_x());
+					if (waypoint_direction > obstacle_direction) {
+						std::cout << "Obstacle 3 waypoint greater than\n";
+
+						std::cout << "Current Vehicle Position: " << our_vehicle.get_center_x() << ", " << our_vehicle.get_center_y() << ")\n";
+
+						obstacle_perpendicular = obstacle_direction + 3.14159 / 2;
+						new_x = (int)(obstacle_3.obstacle_radius() * cos(obstacle_perpendicular)) + obstacle_3.get_center_x();
+						new_y = (int)(obstacle_3.obstacle_radius() * sin(obstacle_perpendicular)) + obstacle_3.get_center_y();
+
+						add_new_waypoint(waypoint_array, array_size, new_x, new_y);
+
+						obstacle_3_flag = 1;
+
+						waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
+						position_error = ((waypoint_array[0] - our_vehicle.get_vehicle_center_x()) * (waypoint_array[0] - our_vehicle.get_vehicle_center_x()) + (waypoint_array[1] - our_vehicle.get_vehicle_center_y()) * (waypoint_array[1] - our_vehicle.get_vehicle_center_y()));
+
+						position_threshold = obstacle_threshold;
+					}
+					else {
+						std::cout << "Obstacle 3 waypoint less than\n";
+
+						std::cout << "Current Vehicle Position: " << our_vehicle.get_center_x() << ", " << our_vehicle.get_center_y() << ")\n";
+
+						obstacle_perpendicular = obstacle_direction - 3.14159 / 2;
+						new_x = (int)(obstacle_3.obstacle_radius() * cos(obstacle_perpendicular)) + obstacle_3.get_center_x();
+						new_y = (int)(obstacle_3.obstacle_radius() * sin(obstacle_perpendicular)) + obstacle_3.get_center_y();
+
+						add_new_waypoint(waypoint_array, array_size, new_x, new_y);
+
+						obstacle_3_flag = 1;
+
+						waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
+						position_error = ((waypoint_array[0] - our_vehicle.get_vehicle_center_x()) * (waypoint_array[0] - our_vehicle.get_vehicle_center_x()) + (waypoint_array[1] - our_vehicle.get_vehicle_center_y()) * (waypoint_array[1] - our_vehicle.get_vehicle_center_y()));
+
+						position_threshold = obstacle_threshold;
+					}
+				}
+			}
+
+			// IF THERE ARE NO EXISTING WAYPOINTS, USE TARGET LOCATION
+			else {
+				double dist_calc_1 = abs((*target_y - our_vehicle.get_vehicle_center_y()) * obstacle_1.get_center_x() - (*target_x - our_vehicle.get_vehicle_center_x()) * obstacle_1.get_center_y() + *target_x * our_vehicle.get_vehicle_center_y() - *target_y * our_vehicle.get_vehicle_center_x());
+				double dist_calc_2 = sqrt((pow(*target_y - our_vehicle.get_vehicle_center_y(), 2) + pow(*target_x - our_vehicle.get_vehicle_center_x(), 2)));// *obstacle_1.obstacle_radius();
+				double distance = abs(dist_calc_1) / abs(dist_calc_2);
+
+				//std::cout << "TAR_DIST_CALC_1: " << dist_calc_1 << "\n";
+				//std::cout << "TAR_DIST_CALC_2: " << dist_calc_2 << "\n";
+
+				if (distance < obstacle_1.obstacle_radius()) {
+					// Path intersects with keep-out zone, need to find new waypoint
+					obstacle_direction = atan2((obstacle_1.get_center_y() - our_vehicle.get_vehicle_center_y()), (obstacle_1.get_center_x()) - our_vehicle.get_vehicle_center_x());
+					if (waypoint_direction > obstacle_direction) {
+						std::cout << "Obstacle 1 waypoint greater than\n";
+
+						std::cout << "Current Vehicle Position: " << our_vehicle.get_center_x() << ", " << our_vehicle.get_center_y() << ")\n";
+
+						obstacle_perpendicular = obstacle_direction + 3.14159 / 2;
+						new_x = (int)(obstacle_1.obstacle_radius() * cos(obstacle_perpendicular)) + obstacle_1.get_center_x();
+						new_y = (int)(obstacle_1.obstacle_radius() * sin(obstacle_perpendicular)) + obstacle_1.get_center_y();
+
+						add_new_waypoint(waypoint_array, array_size, new_x, new_y);
+
+						obstacle_1_flag = 1;
+
+						waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
+						position_error = ((waypoint_array[0] - our_vehicle.get_vehicle_center_x()) * (waypoint_array[0] - our_vehicle.get_vehicle_center_x()) + (waypoint_array[1] - our_vehicle.get_vehicle_center_y()) * (waypoint_array[1] - our_vehicle.get_vehicle_center_y()));
+
+						position_threshold = obstacle_threshold;
+					}
+					else {
+						std::cout << "Obstacle 1 waypoint less than\n";
+
+						std::cout << "Current Vehicle Position: " << our_vehicle.get_center_x() << ", " << our_vehicle.get_center_y() << ")\n";
+
+						obstacle_perpendicular = obstacle_direction - 3.14159 / 2;
+						new_x = (int)(obstacle_1.obstacle_radius() * cos(obstacle_perpendicular)) + obstacle_1.get_center_x();
+						new_y = (int)(obstacle_1.obstacle_radius() * sin(obstacle_perpendicular)) + obstacle_1.get_center_y();
+
+						add_new_waypoint(waypoint_array, array_size, new_x, new_y);
+
+						obstacle_1_flag = 1;
+
+						waypoint_direction = atan2((waypoint_array[1] - our_vehicle.get_vehicle_center_y()), (waypoint_array[0]) - our_vehicle.get_vehicle_center_x());
+						position_error = ((waypoint_array[0] - our_vehicle.get_vehicle_center_x()) * (waypoint_array[0] - our_vehicle.get_vehicle_center_x()) + (waypoint_array[1] - our_vehicle.get_vehicle_center_y()) * (waypoint_array[1] - our_vehicle.get_vehicle_center_y()));
+
+						position_threshold = obstacle_threshold;
+					}
+				}
+			}
+		}
+
 		// Debug Prints
 		if (KEY(VK_RETURN)) {
 			std::cout << "Current Direction Error: " << direction_error << "\n\n";
@@ -340,7 +546,7 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 		double active_direction_threshold = fine_align_flag ? fire_direction_threshold : direction_threshold;
 
 		// Turn towards current waypoint
-		if ((abs(direction_error) > active_direction_threshold)) { //&& (abs(position_error) > position_threshold)) {
+		if ((abs(direction_error) > active_direction_threshold)) {
 			if (direction_error > 0 && turn_flag < 1) {
 
 				serial_send("9\n", 2, h);
@@ -366,8 +572,6 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 				std::cout << "SLOW DOWN MORE BROTHER: " << slower_drive_speed_string << "\n";
 
 				serial_send(slower_drive_speed_string, 4, h);
-
-				//serial_send(serial_wheels, 4, h);
 			}
 			else if ((abs(direction_error) < 3 * direction_threshold) && (turn_flag != 0) && (slow_flag < 1)) {
 				slow_flag = 1;
@@ -377,8 +581,6 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 				std::cout << "SLOW DOWN BROTHER: " << slow_drive_speed_string << "\n";
 
 				serial_send(slow_drive_speed_string, 4, h);
-
-				//serial_send(serial_wheels, 4, h);
 			}
 
 		}
@@ -407,10 +609,9 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 
 				}
 
-
-				std::cout << "Position Threshold: " << position_threshold << "\n";
-				std::cout << "Position Error: " << position_error << "\n";
-
+//				std::cout << "Position Threshold: " << position_threshold << "\n";
+//				std::cout << "Position Error: " << position_error << "\n";
+//
 				std::cout << "FULL STEAM AHEAD!\n";
 
 			}
@@ -451,12 +652,6 @@ void mapper(TargetPositions& centroid_array, HANDLE& h, int* waypoint_array, int
 						fine_align_flag = 0;
 						serial_send("13\n", 3, h);
 						std::cout << "TARGET ELIMINATED. GET TO EXTRACTION 47.\n\n";
-						Sleep(100);
-						serial_send("13\n", 3, h);
-						std::cout << "DOUBLE TAP.\n\n";
-						Sleep(100);
-						serial_send("13\n", 3, h);
-						std::cout << "OVERKILL!\n\n";
 						Sleep(100);
 						serial_send("0\n", 2, h);
 						break;
