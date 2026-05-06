@@ -46,5 +46,5 @@ int scale_skew(image& a, image& b, double rskew, double gskew, double bskew);
 //   pm.tlow/thigh  = mean_grey +/- max(2*std_grey, 15 counts)
 //   pm.vmin        = mean_val  - max(2*std_val,  20)         [floor at 0]
 //   pm.sat_min     = mean_sat  - max(2*std_sat,  0.10)       [floor at 0]
-// Near-grey pixels (sat < 0.10) are excluded as their hue is unreliable.
+
 void sample_mask_at_cursor(image& rgb, int ic, int jc, int sample_r, MaskParameters& pm);

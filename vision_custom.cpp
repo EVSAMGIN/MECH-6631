@@ -2,6 +2,163 @@
 //#include "image_transfer.h"
 #include "vision_custom.h"
 
+
+int threshold_mask(image& grey_gauss, image& mask, image& rgb, const MaskParameters& pm)
+{
+	//Applies mask parameters and returns inverted image 
+
+	ibyte* pg = grey_gauss.pdata; //greyscale pointer
+	ibyte* pb = mask.pdata; //mask pointer
+	int np = mask.width * mask.height;
+	for (int k = 0; k < np; k++) {
+		double hue, sat, val;
+		calculate_HSV(rgb.pdata[3 * k + 2], rgb.pdata[3 * k + 1], rgb.pdata[3 * k], hue, sat, val);
+
+		bool grey_ok = (pg[k] >= pm.tlow && pg[k] <= pm.thigh); //greyscale range check
+		bool hue_ok = (hue >= pm.hlow && hue <= pm.hhigh); //hue range check
+		if (pm.hlow2 >= 0) hue_ok = hue_ok || (hue >= pm.hlow2 && hue <= pm.hhigh2); //hue wraparound check
+		if (grey_ok && hue_ok && val >= pm.vmin && sat >= pm.sat_min) //sat and val floor checks
+			pb[k] = 255;
+		else
+			pb[k] = 0;
+	}
+	return 0;
+}
+
+void sample_mask_at_cursor(image& rgb, int ic, int jc, int sample_r, MaskParameters& pm)
+// Sample all pixels within a circle of radius sample_r centred at (ic, jc).
+// Fills every field of mask parameters based on standard deviations from sampled circle
+//Sampling strategy derived from: https://www.mathworks.com/help/images/ref/stdfilt.html
+{
+	ibyte* pr = rgb.pdata;
+	int    W = rgb.width;
+	int    H = rgb.height;
+
+	// Accumulator:hue, greyscale, value, and saturation inside the circle 
+	double hue_sum = 0.0;
+	double grey_sum = 0.0;
+	double val_sum = 0.0;
+	double sat_sum = 0.0;
+	int    n_pixels = 0;
+	double hues[10000];   // fixed buffer
+	double greys[10000];
+	double vals[10000];
+	double sats[10000];
+
+	//Check within circle area
+	for (int dj = -sample_r; dj <= sample_r; dj++) {
+		for (int di = -sample_r; di <= sample_r; di++) {
+			if (di * di + dj * dj > sample_r * sample_r) continue;  // outside circle
+			int pi = ic + di;
+			int pj = jc + dj;
+			if (pi < 0 || pi >= W || pj < 0 || pj >= H) continue;  // outside image
+			int k = pj * W + pi;
+			int R = pr[3 * k + 2], G = pr[3 * k + 1], B = pr[3 * k];
+			double hue, sat, val;
+			calculate_HSV(R, G, B, hue, sat, val);
+			if (sat < 0.10) continue;  // skip near-grey pixels, they have unreliable hue
+			double grey = 0.299 * R + 0.587 * G + 0.114 * B;
+			hues[n_pixels] = hue;
+			greys[n_pixels] = grey;
+			vals[n_pixels] = val;
+			sats[n_pixels] = sat;
+			hue_sum += hue;
+			grey_sum += grey;
+			val_sum += val;
+			sat_sum += sat;
+			n_pixels++;
+			if (n_pixels >= 10000) break;
+		}
+		if (n_pixels >= 10000) break;
+	}
+
+	if (n_pixels == 0) {
+		std::cout << "\nWARNING sample_mask_at_cursor: no saturated pixels found, parameters unchanged.";
+		return;
+	}
+
+	// Mean values
+	double mean_hue = hue_sum / n_pixels;
+	double mean_grey = grey_sum / n_pixels;
+	double mean_val = val_sum / n_pixels;
+	double mean_sat = sat_sum / n_pixels;
+
+	// Standard deviations
+	double var_hue_sum = 0.0;
+	double var_grey_sum = 0.0;
+	double var_val_sum = 0.0;
+	double var_sat_sum = 0.0;
+	for (int i = 0; i < n_pixels; i++) {
+		double diff_hue = hues[i] - mean_hue;
+		// wrap diff into [-180, +180] so red hues near 0/360 don't blow up the variance
+		if (diff_hue > 180.0) diff_hue -= 360.0;
+		if (diff_hue < -180.0) diff_hue += 360.0;
+		var_hue_sum += diff_hue * diff_hue;
+		var_grey_sum += (greys[i] - mean_grey) * (greys[i] - mean_grey);
+		var_val_sum += (vals[i] - mean_val) * (vals[i] - mean_val);
+		var_sat_sum += (sats[i] - mean_sat) * (sats[i] - mean_sat);
+	}
+	double std_hue = sqrt(var_hue_sum / n_pixels);
+	double std_grey = sqrt(var_grey_sum / n_pixels);
+	double std_val = sqrt(var_val_sum / n_pixels);
+	double std_sat = sqrt(var_sat_sum / n_pixels);
+
+	// minimum spread of 10 deg so a very uniform target still gets a usable window
+	const double MIN_HUE_SPREAD = 10.0;
+	const double MIN_GREY_SPREAD = 15.0;
+	const double MIN_VAL_SPREAD = 20.0;
+	const double MIN_SAT_SPREAD = 0.10;
+
+	//apply 2* standard deviation to spread
+	double hue_spread = std_hue * 2.0; if (hue_spread < MIN_HUE_SPREAD)  hue_spread = MIN_HUE_SPREAD;
+	double grey_spread = std_grey * 2.0; if (grey_spread < MIN_GREY_SPREAD) grey_spread = MIN_GREY_SPREAD;
+	double val_spread = std_val * 2.0; if (val_spread < MIN_VAL_SPREAD)  val_spread = MIN_VAL_SPREAD;
+	double sat_spread = std_sat * 2.0; if (sat_spread < MIN_SAT_SPREAD)  sat_spread = MIN_SAT_SPREAD;
+
+	double hlow = mean_hue - hue_spread;
+	double hhigh = mean_hue + hue_spread;
+	int    tlow = (int)(mean_grey - grey_spread); if (tlow < 0)   tlow = 0;
+	int    thigh = (int)(mean_grey + grey_spread); if (thigh > 255) thigh = 255;
+	int    vmin = (int)(mean_val - val_spread);  if (vmin < 0)   vmin = 0;
+	double sat_min = mean_sat - sat_spread;        if (sat_min < 0) sat_min = 0.0;
+
+	pm.tlow = tlow;
+	pm.thigh = thigh;
+	pm.vmin = vmin;
+	pm.sat_min = sat_min;
+
+	// handle wraparound: 
+	if (hlow < 0.0) {
+
+		pm.hlow = 0;
+		pm.hhigh = (int)hhigh;
+		pm.hlow2 = (int)(hlow + 360.0);
+		pm.hhigh2 = 360;
+	}
+	else if (hhigh > 360.0) {
+
+		pm.hlow = (int)hlow;
+		pm.hhigh = 360;
+		pm.hlow2 = 0;
+		pm.hhigh2 = (int)(hhigh - 360.0);
+	}
+	else {
+		// no wraparound
+		pm.hlow = (int)hlow;
+		pm.hhigh = (int)hhigh;
+		pm.hlow2 = -1;
+		pm.hhigh2 = -1;
+	}
+
+	std::cout << "\n  sampled " << n_pixels << " px"
+		<< "  hue=" << (int)mean_hue << "+-" << (int)std_hue << " -> [" << pm.hlow << "," << pm.hhigh << "]";
+	if (pm.hlow2 >= 0)
+		std::cout << "+[" << pm.hlow2 << "," << pm.hhigh2 << "]";
+	std::cout << "  grey=" << (int)mean_grey << "+-" << (int)std_grey << " -> [" << pm.tlow << "," << pm.thigh << "]"
+		<< "  val=" << (int)mean_val << "+-" << (int)std_val << " -> vmin=" << pm.vmin
+		<< "  sat=" << mean_sat << "+-" << std_sat << " -> sat_min=" << pm.sat_min;
+}
+
 //Not used
 void colour_filter(ibyte* p0, int width, int height, ColourFilter& f, int pthresh)
 {
@@ -117,6 +274,7 @@ void calculate_HSV(int R, int G, int B, double& hue, double& sat, double& value)
 	if (hue < 0) hue += 360;
 }
 
+//Not used
 int threshold_sat(image& a, image& b, image& rgb1, int tlow, int thigh, double sat_max)
 {
 	ibyte* pa = a.pdata;
@@ -149,151 +307,7 @@ int threshold_v(image& a, image& b, image& rgb, int vmin, int tlow, int thigh, d
 	return 0;
 }
 
-int threshold_mask(image& grey_gauss, image& mask, image& rgb, const MaskParameters& pm)
-{
-	ibyte* pg = grey_gauss.pdata;
-	ibyte* pb = mask.pdata;
-	int np = mask.width * mask.height;
-	for (int k = 0; k < np; k++) {
-		double hue, sat, val;
-		calculate_HSV(rgb.pdata[3 * k + 2], rgb.pdata[3 * k + 1], rgb.pdata[3 * k], hue, sat, val);
-		bool grey_ok = (pg[k] >= pm.tlow && pg[k] <= pm.thigh);
-		bool hue_ok = (hue >= pm.hlow && hue <= pm.hhigh);
-		if (pm.hlow2 >= 0) hue_ok = hue_ok || (hue >= pm.hlow2 && hue <= pm.hhigh2);
-		pb[k] = (grey_ok && hue_ok && val >= pm.vmin && sat >= pm.sat_min) ? 255 : 0;
-	}
-	return 0;
-}
 
-void sample_mask_at_cursor(image& rgb, int ic, int jc, int sample_r, MaskParameters& pm)
-// Sample all pixels within a circle of radius sample_r centred at (ic, jc).
-// Fills every field of mask parameters based on standard deviations from sampled circle
-//Sampling strategy derived from: https://www.mathworks.com/help/images/ref/stdfilt.html
-{
-	ibyte* pr = rgb.pdata;
-	int    W   = rgb.width;
-	int    H   = rgb.height;
-
-	// Accumulator:hue, greyscale, value, and saturation inside the circle 
-	double hue_sum  = 0.0;
-	double grey_sum = 0.0;
-	double val_sum  = 0.0;
-	double sat_sum  = 0.0;
-	int    n_pixels = 0;
-	double hues[10000];   // fixed buffer
-	double greys[10000];
-	double vals[10000];
-	double sats[10000];
-
-	//Check within circle area
-	for (int dj = -sample_r; dj <= sample_r; dj++) {
-		for (int di = -sample_r; di <= sample_r; di++) {
-			if (di * di + dj * dj > sample_r * sample_r) continue;  // outside circle
-			int pi = ic + di;
-			int pj = jc + dj;
-			if (pi < 0 || pi >= W || pj < 0 || pj >= H) continue;  // outside image
-			int k = pj * W + pi;
-			int R = pr[3*k+2], G = pr[3*k+1], B = pr[3*k];
-			double hue, sat, val;
-			calculate_HSV(R, G, B, hue, sat, val);
-			if (sat < 0.10) continue;  // skip near-grey pixels, they have unreliable hue
-			double grey = 0.299*R + 0.587*G + 0.114*B;
-			hues[n_pixels]  = hue;
-			greys[n_pixels] = grey;
-			vals[n_pixels]  = val;
-			sats[n_pixels]  = sat;
-			hue_sum  += hue;
-			grey_sum += grey;
-			val_sum  += val;
-			sat_sum  += sat;
-			n_pixels++;
-			if (n_pixels >= 10000) break;
-		}
-		if (n_pixels >= 10000) break;
-	}
-
-	if (n_pixels == 0) {
-		std::cout << "\nWARNING sample_mask_at_cursor: no saturated pixels found, parameters unchanged.";
-		return;
-	}
-
-	// Mean values
-	double mean_hue  = hue_sum  / n_pixels;
-	double mean_grey = grey_sum / n_pixels;
-	double mean_val  = val_sum  / n_pixels;
-	double mean_sat  = sat_sum  / n_pixels;
-
-	// Standard deviations
-	double var_hue_sum  = 0.0;
-	double var_grey_sum = 0.0;
-	double var_val_sum  = 0.0;
-	double var_sat_sum  = 0.0;
-	for (int i = 0; i < n_pixels; i++) {
-		double diff_hue = hues[i] - mean_hue;
-		// wrap diff into [-180, +180] so red hues near 0/360 don't blow up the variance
-		if (diff_hue >  180.0) diff_hue -= 360.0;
-		if (diff_hue < -180.0) diff_hue += 360.0;
-		var_hue_sum  += diff_hue * diff_hue;
-		var_grey_sum += (greys[i] - mean_grey) * (greys[i] - mean_grey);
-		var_val_sum  += (vals[i]  - mean_val)  * (vals[i]  - mean_val);
-		var_sat_sum  += (sats[i]  - mean_sat)  * (sats[i]  - mean_sat);
-	}
-	double std_hue  = sqrt(var_hue_sum  / n_pixels);
-	double std_grey = sqrt(var_grey_sum / n_pixels);
-	double std_val  = sqrt(var_val_sum  / n_pixels);
-	double std_sat  = sqrt(var_sat_sum  / n_pixels);
-
-	// minimum spread of 10 deg so a very uniform target still gets a usable window
-	const double MIN_HUE_SPREAD  = 10.0;
-	const double MIN_GREY_SPREAD = 15.0;
-	const double MIN_VAL_SPREAD  = 20.0;
-	const double MIN_SAT_SPREAD  = 0.10;
-	double hue_spread  = std_hue  * 1.0; if (hue_spread  < MIN_HUE_SPREAD)  hue_spread  = MIN_HUE_SPREAD;
-	double grey_spread = std_grey * 1.0; if (grey_spread < MIN_GREY_SPREAD) grey_spread = MIN_GREY_SPREAD;
-	double val_spread  = std_val  * 1.0; if (val_spread  < MIN_VAL_SPREAD)  val_spread  = MIN_VAL_SPREAD;
-	double sat_spread  = std_sat  * 1.0; if (sat_spread  < MIN_SAT_SPREAD)  sat_spread  = MIN_SAT_SPREAD;
-
-	double hlow  = mean_hue  - hue_spread;
-	double hhigh = mean_hue  + hue_spread;
-	int    tlow  = (int)(mean_grey - grey_spread); if (tlow  < 0)   tlow  = 0;
-	int    thigh = (int)(mean_grey + grey_spread); if (thigh > 255) thigh = 255;
-	int    vmin  = (int)(mean_val  - val_spread);  if (vmin  < 0)   vmin  = 0;
-	double sat_min = mean_sat - sat_spread;        if (sat_min < 0) sat_min = 0.0;
-
-	pm.tlow    = tlow;
-	pm.thigh   = thigh;
-	pm.vmin    = vmin;
-	pm.sat_min = sat_min;
-
-	// handle wraparound: 
-	if (hlow < 0.0) {
-	
-		pm.hlow   = 0;
-		pm.hhigh  = (int)hhigh;
-		pm.hlow2  = (int)(hlow + 360.0);
-		pm.hhigh2 = 360;
-	} else if (hhigh > 360.0) {
-		
-		pm.hlow   = (int)hlow;
-		pm.hhigh  = 360;
-		pm.hlow2  = 0;
-		pm.hhigh2 = (int)(hhigh - 360.0);
-	} else {
-		// no wraparound
-		pm.hlow   = (int)hlow;
-		pm.hhigh  = (int)hhigh;
-		pm.hlow2  = -1;
-		pm.hhigh2 = -1;
-	}
-
-	std::cout << "\n  sampled " << n_pixels << " px"
-	          << "  hue="  << (int)mean_hue  << "+-" << (int)std_hue  << " -> [" << pm.hlow  << "," << pm.hhigh  << "]";
-	if (pm.hlow2 >= 0)
-		std::cout << "+[" << pm.hlow2 << "," << pm.hhigh2 << "]";
-	std::cout << "  grey=" << (int)mean_grey << "+-" << (int)std_grey << " -> [" << pm.tlow  << "," << pm.thigh  << "]"
-	          << "  val="  << (int)mean_val  << "+-" << (int)std_val  << " -> vmin=" << pm.vmin
-	          << "  sat="  << mean_sat       << "+-" << std_sat       << " -> sat_min=" << pm.sat_min;
-}
 
 //Not used
 int scale_skew(image& a, image& b, double rskew, double gskew, double bskew)
