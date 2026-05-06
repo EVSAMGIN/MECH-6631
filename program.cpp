@@ -20,8 +20,10 @@ using namespace std;
 
 #define NTARGETS 6
 
-/*TO DO:
-		Selection thread:
+/*
+TO DO: NOT IMPLEMENTED
+
+		Identification thread:
 		-Replace cursor with sobel edge detection
 		-If matching colours between cars then determine which car based on relative distance from other target
 
@@ -31,10 +33,8 @@ using namespace std;
 		-Match based on other label info(colour?)
 		-Requires a label_info function
 
-		Additional functions:
-		Add label info function to calculate label size and average colour (roll existing label area function into this one)
 
-		*/
+*/
 
 int activate(image& a, image& b, image& grey_gauss, image& rgb, image& rgb0, image& rgb1, image mask[], image label[]);
 int deactivate(image& a, image& b, image& grey_gauss, image& rgb, image& rgb0, image& rgb1, image mask[], image label[]);
@@ -103,14 +103,17 @@ int main()
 
 	activate(a, b, grey_gauss, rgb, rgb0, rgb1, mask, label);
 
+	//Image Identification
 	find_objects(rgb0, a, b, grey_gauss, rgb, rgb1, mask, label, pm, ic_arr, jc_arr, ref_areas);
 
 	int i = 0;
 	while (1) {
-		
+	//Enter Tracking loop	
 
 		
 		track_objects(rgb0, a, b, grey_gauss, rgb, rgb1, mask, label, pm, ic_arr, jc_arr, ref_areas, target_positions);
+
+		//Launch control thread
 		if (i < 1) {
 			thread control_thread(mapper, ref(target_positions), ref(h1), waypoints, waypoint_array_size, IMAGE_WIDTH, IMAGE_HEIGHT);
 			control_thread.detach();
@@ -173,7 +176,7 @@ int deactivate(image& a, image& b, image& grey_gauss, image& rgb, image& rgb0, i
 	return 0;
 }
 
-//===SELECTION THREAD===
+//===IDENTIFICATION THREAD===
 int find_objects(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb, image& rgb1, image mask[], image label[], MaskParameters pm[], double ic[], double jc[], int ref_areas[])
 {
 	cout << "\npress space to get an image";
@@ -193,7 +196,7 @@ int find_objects(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb,
 	return 0;
 }
 
-//===SELECTION THREAD LVL2===
+//===IDENTIFICATION THREAD LVL2===
 int select_object(image& rgb0, image& a, image& b, image& grey_gauss, image& rgb, image& rgb1, image mask[], image label[], MaskParameters pm[], double& ic, double& jc, int target_index)
 {
 	int i = 200, j = 300;

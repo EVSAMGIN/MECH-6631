@@ -2,6 +2,7 @@
 //#include "image_transfer.h"
 #include "vision_custom.h"
 
+//Not used
 void colour_filter(ibyte* p0, int width, int height, ColourFilter& f, int pthresh)
 {
 	int i, j, k, q, up[6][3], down[6][3], product_up, product_down;
@@ -84,6 +85,7 @@ void draw_marker(ibyte* p0, int width, int height, int radius, double ic, double
 	}
 }
 
+//Not used
 int threshold_range(image& a, image& b, int tlow1, int thigh1, int tlow2, int thigh2)
 {
 	ibyte* pa = (ibyte*)a.pdata;
@@ -133,7 +135,7 @@ int threshold_sat(image& a, image& b, image& rgb1, int tlow, int thigh, double s
 	}
 	return 0;
 }
-
+ //Not used
 int threshold_v(image& a, image& b, image& rgb, int vmin, int tlow, int thigh, double sat_min)
 {
 	ibyte* pb = b.pdata;
@@ -165,23 +167,25 @@ int threshold_mask(image& grey_gauss, image& mask, image& rgb, const MaskParamet
 
 void sample_mask_at_cursor(image& rgb, int ic, int jc, int sample_r, MaskParameters& pm)
 // Sample all pixels within a circle of radius sample_r centred at (ic, jc).
-// Fills every field of pm: hlow/hhigh, tlow/thigh, vmin, sat_min.
+// Fills every field of mask parameters based on standard deviations from sampled circle
+//Sampling strategy derived from: https://www.mathworks.com/help/images/ref/stdfilt.html
 {
 	ibyte* pr = rgb.pdata;
 	int    W   = rgb.width;
 	int    H   = rgb.height;
 
-	// --- pass 1: accumulate hue, greyscale, value, and saturation inside the circle ---
+	// Accumulator:hue, greyscale, value, and saturation inside the circle 
 	double hue_sum  = 0.0;
 	double grey_sum = 0.0;
 	double val_sum  = 0.0;
 	double sat_sum  = 0.0;
 	int    n_pixels = 0;
-	double hues[10000];   // fixed buffer; circle of r=50 has ~7854 px, r=56 fits in 10000
+	double hues[10000];   // fixed buffer
 	double greys[10000];
 	double vals[10000];
 	double sats[10000];
 
+	//Check within circle area
 	for (int dj = -sample_r; dj <= sample_r; dj++) {
 		for (int di = -sample_r; di <= sample_r; di++) {
 			if (di * di + dj * dj > sample_r * sample_r) continue;  // outside circle
@@ -213,13 +217,13 @@ void sample_mask_at_cursor(image& rgb, int ic, int jc, int sample_r, MaskParamet
 		return;
 	}
 
-	// --- pass 2: means ---
+	// Mean values
 	double mean_hue  = hue_sum  / n_pixels;
 	double mean_grey = grey_sum / n_pixels;
 	double mean_val  = val_sum  / n_pixels;
 	double mean_sat  = sat_sum  / n_pixels;
 
-	// --- pass 3: standard deviations ---
+	// Standard deviations
 	double var_hue_sum  = 0.0;
 	double var_grey_sum = 0.0;
 	double var_val_sum  = 0.0;
@@ -261,15 +265,15 @@ void sample_mask_at_cursor(image& rgb, int ic, int jc, int sample_r, MaskParamet
 	pm.vmin    = vmin;
 	pm.sat_min = sat_min;
 
-	// --- handle wraparound: if range crosses 0 or 360, split into two bands ---
+	// handle wraparound: 
 	if (hlow < 0.0) {
-		// e.g. mean=10, spread=20 -> hlow=-10 -> primary [0,30], secondary [350,360]
+	
 		pm.hlow   = 0;
 		pm.hhigh  = (int)hhigh;
 		pm.hlow2  = (int)(hlow + 360.0);
 		pm.hhigh2 = 360;
 	} else if (hhigh > 360.0) {
-		// e.g. mean=350, spread=20 -> hhigh=370 -> primary [330,360], secondary [0,10]
+		
 		pm.hlow   = (int)hlow;
 		pm.hhigh  = 360;
 		pm.hlow2  = 0;
@@ -291,6 +295,7 @@ void sample_mask_at_cursor(image& rgb, int ic, int jc, int sample_r, MaskParamet
 	          << "  sat="  << mean_sat       << "+-" << std_sat       << " -> sat_min=" << pm.sat_min;
 }
 
+//Not used
 int scale_skew(image& a, image& b, double rskew, double gskew, double bskew)
 {
 	i4byte size, i;
